@@ -1,0 +1,13 @@
+﻿<div class="container">
+	<div>
+		<h1>Jobs</h1>
+	</div>
+	<div class="col-11 mx-auto">
+		@foreach (var job in Model)
+		{
+			<a asp-controller="Person" asp-action="JobCount" asp-route-id="@job.JobId" class="btn btn-primary w-20 m-1">
+				@job.Title
+			</a>
+		}
+	</div>
+</div>

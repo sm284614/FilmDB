@@ -1,0 +1,34 @@
+﻿@model FilmDetail
+
+<div class="container">
+	<h1>@Model.Film.Title</h1>
+	<p><strong>Year:</strong> @Model.Film.Year</p>
+
+	@foreach (var genre in Model.Genres)
+	{
+		@genre.Name
+	}
+
+	<h3>Cast and Crew</h3>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Job Title</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var personJob in Model.PersonJobDetail)
+			{
+				<tr>
+					<td>
+						<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
+							@personJob.PersonName
+						</a>
+					</td>
+					<td>@personJob.JobTitle</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>

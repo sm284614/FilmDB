@@ -1,0 +1,40 @@
+﻿@model PersonFilmography
+
+<div class="container">
+	<div>
+		<h1 class="d-inline">@Model.Person.Name</h1>
+		@if (Model.Person.BirthYear.HasValue)
+		{
+			<p class="d-inline">(@Model.Person.BirthYear - @(Model.Person.DeathYear.HasValue ? Model.Person.DeathYear.Value.ToString() : "present"))</p>
+
+		}
+	</div>
+	<div>
+		<a asp-controller="Person" asp-action="Collaboration" asp-route-id="@Model.Person.PersonId">
+			View collaborations for @Model.Person.Name
+		</a>
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Film Title</th>
+					<th>Year</th>
+					<th>Job Title</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var filmJob in Model.FilmJobs)
+				{
+					<tr>
+						<td>
+							<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@filmJob.FilmId">
+								@filmJob.FilmTitle
+							</a>
+						</td>
+						<td>@filmJob.FilmYear</td>
+						<td>@filmJob.JobTitle</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>

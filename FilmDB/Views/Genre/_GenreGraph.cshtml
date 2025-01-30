@@ -1,0 +1,43 @@
+﻿@model FilmDB.Models.GenreFilmYearCount
+
+<canvas id="genreChart" width="600" height="400"></canvas>
+
+<script>
+    var genreChart;  // Global variable for the chart instance
+
+    // Function to create or update the chart with new data
+    function createGenreGraph(data) {
+        var ctx = document.getElementById('genreChart').getContext('2d');
+
+        if (genreChart) {
+            genreChart.destroy();  // Destroy the previous chart before creating a new one
+        }
+
+        genreChart = new Chart(ctx, {
+            type: 'bar',  // Bar chart
+            data: {
+                labels: data.FilmYears.map(f => f.Year), // Array of years
+                datasets: [{
+                    label: 'Film Count',
+                    data: data.FilmYears.map(f => f.FilmCount), // Array of film counts
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // This function will be triggered by the AJAX call to update the graph
+    function updateGraph(data) {
+        createGenreGraph(data);
+    }
+</script>

@@ -1,0 +1,27 @@
+﻿@model JobCount
+
+<h2>Most prolific @Model.Job.Title</h2>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Person</th>
+			<th>Number of films</th>
+			<th>Years active</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var personJob in Model.PersonJobs)
+		{
+			<tr>
+				<td>
+					<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.Person.PersonId">
+						@personJob.Person.Name
+					</a>
+				</td>
+				<td>@personJob.JobCount</td>
+				<td>@personJob.EarliestYear - @personJob.LatestYear</td>
+			</tr>
+		}
+	</tbody>
+</table>

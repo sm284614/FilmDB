@@ -1,0 +1,13 @@
+﻿<div class="container">
+	<div class="align-content-center">
+		<h1>Genres</h1>
+	</div>
+	<div class="col-11 mx-auto">
+		@foreach (var genre in Model)
+		{
+			<a asp-controller="Genre" asp-action="GenreInfo" asp-route-genre_id="@genre.GenreId" class="btn btn-primary w-20 m-1">
+				@genre.Name
+			</a>
+		}
+	</div>
+</div>
