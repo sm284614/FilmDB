@@ -10,7 +10,7 @@
 				<tr>
 					<th>Film Title</th>
 					<th>Year</th>
-					<th>Job Title</th>
+					<th>Collaboration Count</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -23,7 +23,11 @@
 							</a>
 						</td>
 						<td>@collaboration.Job.Title</td>
-						<td>@collaboration.JobCount</td>
+						<td>
+							<a asp-controller="Person" asp-action="TwoPersonCollaboration" asp-route-id1="@collaboration.Person.PersonId" asp-route-id2="@Model.Person.PersonId">
+								@collaboration.JobCount
+							</a>							
+						</td>
 					</tr>
 				}
 			</tbody>

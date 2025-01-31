@@ -128,5 +128,28 @@ namespace FilmDB.Controllers
             return View(collaborationModel);
         }
 
+        public IActionResult TwoPersonCollaboration(string id1, string id2)
+        {
+            var sharedFilms = (from fp1 in _db.Film_Person
+                               join fp2 in _db.Film_Person on fp1.FilmId equals fp2.FilmId
+                               join f in _db.Film on fp1.FilmId equals f.FilmId
+                               join p1 in _db.Person on fp1.PersonId equals p1.PersonId
+                               join p2 in _db.Person on fp2.PersonId equals p2.PersonId
+                               join j1 in _db.Job on fp1.JobId equals j1.JobId
+                               join j2 in _db.Job on fp2.JobId equals j2.JobId
+                               where fp1.PersonId == id1
+                               && fp2.PersonId == id2
+                               && fp1.PersonId != fp2.PersonId  // Avoid self-matching
+                               orderby f.Year descending
+                               select new TwoPersonCollaborationDetail
+                               {
+                                   Film = f,
+                                   Person1 = p1,
+                                   Job1 = j1,
+                                   Person2 = p2,
+                                   Job2 = j2
+                               }).ToList();
+            return View(sharedFilms);
+        }
     }
 }
