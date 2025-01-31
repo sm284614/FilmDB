@@ -17,6 +17,15 @@ namespace FilmDB.Controllers
             List<Person> personList = _db.Person.Take(400).ToList();
             return View(personList);
         }
+        public IActionResult PersonSearch(string query)
+        {
+            var results = _db.Person
+                .Where(p => p.Name.Contains(query))
+                .OrderBy(p => p.Name)
+                .ToList();
+
+            return View("Person", results);
+        }
         public IActionResult PersonFilmography(string id)
         {
             var person = _db.Person
@@ -127,7 +136,6 @@ namespace FilmDB.Controllers
 
             return View(collaborationModel);
         }
-
         public IActionResult TwoPersonCollaboration(string id1, string id2)
         {
             var sharedFilms = (from fp1 in _db.Film_Person

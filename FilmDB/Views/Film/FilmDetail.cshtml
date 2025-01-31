@@ -2,13 +2,10 @@
 
 <div class="container">
 	<h1>@Model.Film.Title</h1>
-	<p><strong>Year:</strong> @Model.Film.Year</p>
-
-	@foreach (var genre in Model.Genres)
-	{
-		@genre.Name
-	}
-
+	<p>
+		<strong>Year:</strong> @Model.Film.Year &nbsp;
+		<strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))
+	</p>
 	<h3>Cast and Crew</h3>
 	<table class="table">
 		<thead>

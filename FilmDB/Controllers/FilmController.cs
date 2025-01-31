@@ -22,6 +22,16 @@ namespace FilmDB.Controllers
                 .ToList();
             return View(filmList);
         }
+        public IActionResult FilmSearch(string query)
+        {
+            var results = _db.Film
+            .Where(f => f.Title.Contains(query))
+            .OrderByDescending(f => f.Year)
+            .ThenBy(f => f.Title) // Then order by title (ascending)
+            .ToList();
+
+            return View("Film", results);
+        }
         public IActionResult GenreYearDetail(string genre, int year)
         {
             // Fetch data for the specific genre and year
