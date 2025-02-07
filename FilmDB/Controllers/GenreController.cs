@@ -17,6 +17,36 @@ namespace FilmDB.Controllers
             List<Genre> genreList = _db.Genre.ToList();
             return View(genreList);
         }
+        public IActionResult GenreGraph(int genre_id)
+        {
+            var genre = _db.Genre
+                .Where(g => g.GenreId == genre_id)
+                .FirstOrDefault();
+
+            if (genre == null)
+            {
+                return NotFound();
+            }
+
+            var genreData = new GenreFilmYearCount
+            {
+                Name = genre.Name,
+                FilmYears = _db.Film
+                    .Join(_db.Film_Genre, f => f.FilmId, fg => fg.FilmId, (f, fg) => new { f, fg })
+                    .Where(joined => joined.fg.GenreId == genre_id)
+                    .GroupBy(joined => joined.f.Year)
+                    .Select(group => new FilmYearCount
+                    {
+                        Year = group.Key,
+                        FilmCount = group.Count()
+                    })
+                    .OrderBy(x => x.Year)
+                    .ToList()
+            };
+
+            return PartialView("_GenreGraph", genreData);  // Return as a partial view
+        }
+
         public IActionResult GenreInfo(int genre_id)
         {
             var genreData = _db.Genre
@@ -49,35 +79,7 @@ namespace FilmDB.Controllers
 
             return View(genreData);
         }
-        public IActionResult GetGenreGraphData(int genre_id)
-        {
-            var genre = _db.Genre
-                .Where(g => g.GenreId == genre_id)
-                .FirstOrDefault();
 
-            if (genre == null)
-            {
-                return NotFound();
-            }
-
-            var genreData = new GenreFilmYearCount
-            {
-                Name = genre.Name,
-                FilmYears = _db.Film
-                    .Join(_db.Film_Genre, f => f.FilmId, fg => fg.FilmId, (f, fg) => new { f, fg })
-                    .Where(joined => joined.fg.GenreId == genre_id)
-                    .GroupBy(joined => joined.f.Year)
-                    .Select(group => new FilmYearCount
-                    {
-                        Year = group.Key,
-                        FilmCount = group.Count()
-                    })
-                    .OrderBy(x => x.Year)
-                    .ToList()
-            };
-
-            return PartialView("_GenreGraph", genreData);  // Return as a partial view
-        }
 
 
     }

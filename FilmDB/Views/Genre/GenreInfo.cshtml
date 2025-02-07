@@ -1,24 +1,6 @@
 ﻿@model FilmDB.Models.GenreFilmYearCount
 <div id="container">
 	<h2>@Model.Name films per year</h2>
-
-	@* <table class="table">
-    <thead>
-        <tr>
-            <th>Year</th>
-            <th>Film Count</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.FilmYears)
-        {
-            <tr>
-                <td>@item.Year</td>
-                <td>@item.FilmCount</td>
-            </tr>
-        }
-    </tbody>
-</table> *@
 	<div>
 		<canvas id="genreChart" width="400" height="200"></canvas>
 	</div>

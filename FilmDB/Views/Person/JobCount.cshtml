@@ -1,12 +1,13 @@
 ﻿@model JobCount
 
-<h2>Most prolific @Model.Job.Title</h2>
+<h2>Top 100 people with '@Model.Job.Title' credits</h2>
 
 <table class="table">
 	<thead>
 		<tr>
 			<th>Person</th>
 			<th>Number of films</th>
+			<th>Life</th>
 			<th>Years active</th>
 		</tr>
 	</thead>
@@ -20,6 +21,7 @@
 					</a>
 				</td>
 				<td>@personJob.JobCount</td>
+				<td>@personJob.Person.BirthYear - @personJob.Person.DeathYear</td>
 				<td>@personJob.EarliestYear - @personJob.LatestYear</td>
 			</tr>
 		}

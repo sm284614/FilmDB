@@ -1,6 +1,18 @@
-﻿<div class="container">
+﻿@{
+	var collaborations = (List<TwoPersonCollaborationDetail>)Model; // Explicit cast
+	var groupedCollaborations = collaborations
+		.GroupBy(c => c.Film.Title)
+		.Select(g => new
+		{
+			Film = g.First().Film, // Use first item for film details
+			Person1Roles = string.Join(", ", g.Select(c => c.Job1.Title).Distinct()), // Merge unique roles
+			Person2Roles = string.Join(", ", g.Select(c => c.Job2.Title).Distinct())  // Merge unique roles
+		})
+		.ToList();
+}
+<div class="container">
 	<div>
-		<h1 class="d-inline">Collaberations between @Model[0].Person1.Name and @Model[0].Person2.Name</h1>
+		<h1 class="d-inline">Collaborations between @Model[0].Person1.Name and @Model[0].Person2.Name</h1>
 	</div>
 	<div>
 		<table class="table table-striped table-hover">
@@ -8,32 +20,30 @@
 				<tr>
 					<th>Film Title</th>
 					<th>Year</th>
-					<th>Person / role</th>
-					<th>Person / role</th>
+					<th>
+						<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@Model[0].Person1.PersonId">
+							@Model[0].Person1.Name
+						</a>
+					</th>
+					<th>
+						<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@Model[0].Person2.PersonId">
+							@Model[0].Person2.Name
+						</a>
+					</th>
 				</tr>
 			</thead>
 			<tbody>
-				@foreach (var collaboration in Model)
+				@foreach (var collaboration in groupedCollaborations)
 				{
 					<tr>
 						<td>
-							<a asp-controller="Film" asp-action="Film" asp-route-id="@collaboration.Film.FilmId">
+							<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@collaboration.Film.FilmId">
 								@collaboration.Film.Title
 							</a>
 						</td>
 						<td>@collaboration.Film.Year</td>
-						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@collaboration.Person1.PersonId">
-								@collaboration.Person1.Name
-							</a>
-							&nbsp;(@collaboration.Job1.Title)
-						</td>
-						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@collaboration.Person2.PersonId">
-								@collaboration.Person2.Name
-							</a>
-							&nbsp;(@collaboration.Job2.Title)
-						</td>
+						<td>@collaboration.Person1Roles</td>
+						<td>@collaboration.Person2Roles</td>
 					</tr>
 				}
 			</tbody>

@@ -1,13 +1,76 @@
-﻿<div class="container">
-	<div class="align-content-center">
-		<h1>Genres</h1>
-	</div>
+﻿@{
+	ViewData["Title"] = "Film Genres";
+}
+<div class="container">
 	<div class="col-11 mx-auto">
-		@foreach (var genre in Model)
+		@foreach (Genre genre in Model)
 		{
-			<a asp-controller="Genre" asp-action="GenreInfo" asp-route-genre_id="@genre.GenreId" class="btn btn-primary w-20 m-1">
+			<a data-id="@genre.GenreId" class="btn genre-button btn-primary w-20 m-1">
 				@genre.Name
 			</a>
 		}
 	</div>
+	<div id="genreGraphContainer" class="mt-4"></div>
 </div>
+
+<!-- jQuery for AJAX -->
+<script src="/_framework/aspnetcore-browser-refresh.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+	$(document).ready(
+		function () {
+		$(".genre-button").click(function () {
+			var genre_id = $(this).data("id");
+			// Show "Loading..." message while waiting for the AJAX request
+			$.ajax({
+				url: "/Genre/GenreGraph",
+				type: "GET",
+				data: { genre_id: genre_id },
+				success: function (data) {
+					 console.log("AJAX call success");  // Check response from server
+					$("#genreGraphContainer").html(data).fadeIn(); // Load table inside div
+					initializeChart(); // Call function to initialize Chart.js
+				},
+				error: function () {
+					console.log("AJAX call failed");  // Debugging line
+					$("#genreGraphContainer").html("<p class='text-danger'>Error loading data.</p>");
+				}
+			});
+		});
+	});
+		function initializeChart() {
+		var ctx = document.getElementById('genreChart').getContext('2d');
+		var genreChart = new Chart(ctx, {
+			type: 'bar',
+			data: {
+				labels: JSON.parse($("#genreChart").attr("data-labels")),
+				datasets: [{
+					label: 'Film Count',
+					data: JSON.parse($("#genreChart").attr("data-data")),
+					backgroundColor: 'rgba(54, 162, 235, 0.8)',
+					borderColor: 'rgba(54, 162, 235, 1)',
+					borderWidth: 1
+				}]
+			},
+			options: {
+				responsive: true,
+				onClick: function (event, elements) {
+					if (elements.length > 0) {
+						const index = elements[0].index;
+						const year = this.data.labels[index];
+						const genre = $("#genreChart").attr("data-genre");
+
+						window.location.href = `/Film/GenreYearDetail?genre=${genre}&year=${year}`;
+					}
+				},
+				scales: { y: { beginAtZero: true } },
+				plugins: { legend: { display: false } }
+			}
+		});
+	}
+
+</script>
+
+
+

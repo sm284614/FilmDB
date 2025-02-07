@@ -1,7 +1,7 @@
-﻿<div class="container">
-	<div>
-		<h1>Jobs</h1>
-	</div>
+﻿@{
+	ViewData["Title"] = "Home Page";
+}
+<div class="container">
 	<div class="col-11 mx-auto">
 		@foreach (var job in Model)
 		{

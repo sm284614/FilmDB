@@ -1,6 +1,7 @@
 //nuget Microsoft.EntityFrameworkCore
 //nuget Microsoft.EntityFrameworkCore.SqlServer
 //nuget Microsoft.EntityFrameworkCore.Tools
+//appsettings.Json, add:  "DefaultConnection": "Server=JSX2016\\SQLEXPRESS;Database=FilmDB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
 using Microsoft.EntityFrameworkCore;
 using FilmDB.Data;
 

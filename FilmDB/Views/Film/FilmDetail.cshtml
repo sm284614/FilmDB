@@ -1,31 +1,61 @@
 ﻿@model FilmDetail
 
 <div class="container">
-	<h1>@Model.Film.Title</h1>
-	<p>
-		<strong>Year:</strong> @Model.Film.Year &nbsp;
-		<strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))
-	</p>
-	<h3>Cast and Crew</h3>
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Job Title</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var personJob in Model.PersonJobDetail)
-			{
-				<tr>
-					<td>
-						<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
-							@personJob.PersonName
-						</a>
-					</td>
-					<td>@personJob.JobTitle</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+    <h1>@Model.Film.Title</h1>
+    <p>
+        <strong>Year:</strong> @Model.Film.Year &nbsp;
+        <strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))
+    </p>
+
+    <!-- Job Filter Buttons -->
+    <div class="d-flex align-items-center">
+        <button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Reset Filter -->
+        @foreach (var jobTitle in Model.PersonJobDetail.Select(pj => pj.JobTitle).Distinct())
+        {
+            <button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
+                @jobTitle
+            </button>
+        }
+    </div>
+
+    <h3>Cast and Crew</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Job Title</th>
+            </tr>
+        </thead>
+        <tbody id="filmTableBody">
+            @foreach (var personJob in Model.PersonJobDetail)
+            {
+                <tr class="film-row" data-job="@personJob.JobTitle">
+                    <td>
+                        <a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
+                            @personJob.PersonName
+                        </a>
+                    </td>
+                    <td>@personJob.JobTitle</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
+
+<!-- JavaScript for Filtering -->
+<script>
+    function filterTable(jobTitle) {
+        const rows = document.querySelectorAll('.film-row');
+
+        rows.forEach(row => {
+            if (jobTitle === 'all' || row.getAttribute('data-job') === jobTitle)
+            {
+                row.style.display = ''; // Show row
+            }
+            else
+            {
+                row.style.display = 'none'; // Hide row
+            }
+        });
+    }
+</script>
