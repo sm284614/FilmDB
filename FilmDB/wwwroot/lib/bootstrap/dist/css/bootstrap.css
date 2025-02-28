@@ -7663,6 +7663,7 @@ textarea.form-control-lg {
 .border-opacity-100 {
   --bs-border-opacity: 1;
 }
+
 .w-10 {
     width: 10% !important;
 }
@@ -7912,7 +7913,7 @@ textarea.form-control-lg {
 }
 
 .m-0 {
-  margin: 0 !important;
+    margin: 0 !important;
 }
 
 .m-1 {

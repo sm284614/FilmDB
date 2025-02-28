@@ -46,7 +46,6 @@ namespace FilmDB.Controllers
 
             return PartialView("_GenreGraph", genreData);  // Return as a partial view
         }
-
         public IActionResult GenreInfo(int genre_id)
         {
             var genreData = _db.Genre

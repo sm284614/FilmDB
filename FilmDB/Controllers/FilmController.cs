@@ -20,17 +20,46 @@ namespace FilmDB.Controllers
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+            List<Genre> genreList = _db.Genre.ToList();
+            ViewBag.GenreList = genreList;
             return View(filmList);
+        }
+        public IActionResult FilterFilmsByGenre(List<short> genreIds)
+        {
+            if (genreIds.Count > 0)
+            {
+                var films = _db.Film
+                    .Where(f => genreIds.All(gid =>
+                        _db.Film_Genre.Any(fg => fg.FilmId == f.FilmId && fg.GenreId == gid)
+                    ))
+                    .OrderByDescending(f => f.Year)
+                    .ToList();
+                var genreNames = _db.Genre
+                    .Where(g => genreIds.Contains(g.GenreId))
+                    .OrderBy(g => g.Name)
+                    .Select(g => g.Name) // Select only the names
+                    .ToList();
+                ViewBag.FilterDescription = string.Join(@"/", genreNames) + " films";
+                ViewBag.FilmCount = films.Count;
+                return PartialView("_FilmTable", films);
+            }
+            else
+            {
+                ViewBag.FilterDescription = "No genres selected";
+                ViewBag.FilmCount = 0;
+                return PartialView("_FilmTable", new List<Film>());
+            }
         }
         public IActionResult FilmSearch(string query)
         {
-            var results = _db.Film
+            var films = _db.Film
             .Where(f => f.Title.Contains(query))
             .OrderByDescending(f => f.Year)
             .ThenBy(f => f.Title) // Then order by title (ascending)
             .ToList();
-
-            return View("Film", results);
+            ViewBag.FilterDescription = $"Titles matching '{query}'";
+            ViewBag.FilmCount = films.Count;
+            return PartialView("_FilmTable", films);
         }
         public IActionResult GenreYearDetail(string genre, int year)
         {
@@ -45,6 +74,23 @@ namespace FilmDB.Controllers
                 .Distinct() // Ensure no duplicate films
                 .ToList();
             ViewBag.FilterDescription = $"{genre} films from {year}";
+            // Pass data to the view
+            return View("Film", films);
+        }
+        public IActionResult GenreYearRangeDetail(string genre, int startYear, int endYear)
+        {
+            // Fetch data for the specific genre and year
+            var films = _db.Film
+                .Where(f => f.Year >= startYear && f.Year <= endYear)  // Filter films by the year
+                .Join(_db.Film_Genre, f => f.FilmId, fg => fg.FilmId, (f, fg) => new { f, fg })  // Join Film and FilmGenre tables
+                .Join(_db.Genre, joined => joined.fg.GenreId, g => g.GenreId, (joined, g) => new { joined.f, g })  // Join with Genre table
+                .Where(joined => joined.g.Name == genre)  // Filter by genre name
+                .OrderByDescending(joined => joined.f.Year)  // Order by year
+                .Select(joined => joined.f)  // Select only Film objects
+                .Distinct() // Ensure no duplicate films
+                .ToList();
+            ViewBag.FilterDescription = $"{genre} films between {startYear} and {endYear}";
+            ViewBag.FilmCount = films.Count;
             // Pass data to the view
             return View("Film", films);
         }
@@ -97,6 +143,7 @@ namespace FilmDB.Controllers
                 .OrderByDescending(fy => fy.Year)  // Order by year
                 .ToList();
             ViewBag.FilterDescription = $"Films from {year}";
+            ViewBag.FilmCount = films.Count();
             // Pass data to the view
             return View("Film", films);
         }

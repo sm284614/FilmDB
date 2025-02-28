@@ -104,6 +104,53 @@ namespace FilmDB.Controllers
         public IActionResult Collaboration(string id)
         {
             // Get the list of collaborators for the given person
+            //var collaborations = _db.Film_Person
+            //    .Where(fp1 => fp1.PersonId == id) // Get all films the given person worked on
+            //    .Join(_db.Film_Person, fp1 => fp1.FilmId, fp2 => fp2.FilmId, (fp1, fp2) => new { fp1, fp2 }) // Find others who worked on those films
+            //    .Where(joined => joined.fp2.PersonId != id) // Exclude the given person
+            //    .Join(_db.Person, joined => joined.fp2.PersonId, p => p.PersonId, (joined, p) => new { joined, p }) // Get collaborator details
+            //    .Join(_db.Job, joined => joined.joined.fp2.JobId, j => j.JobId, (joined, j) => new
+            //    {
+            //        Collaborator = joined.p,
+            //        Job = j,
+            //        Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
+            //    })
+            //    .GroupBy(x => new { x.Collaborator.PersonId, x.Job.JobId }) // Group by collaborator and job
+            //    .Select(group => new PersonJobCount
+            //    {
+            //        Person = group.First().Collaborator,
+            //        Job = group.First().Job,
+            //        JobCount = group.Count(),
+            //        EarliestYear = group.Min(x => x.Year),
+            //        LatestYear = group.Max(x => x.Year)
+            //    })
+            //    .OrderByDescending(pjc => pjc.JobCount)
+            //    .ToList();
+
+            //var collaborations = _db.Film_Person
+            //    .Where(fp1 => fp1.PersonId == id) // Get all films the given person worked on
+            //    .Join(_db.Film_Person, fp1 => fp1.FilmId, fp2 => fp2.FilmId, (fp1, fp2) => new { fp1, fp2 }) // Find others who worked on those films
+            //    .Where(joined => joined.fp2.PersonId != id) // Exclude the given person
+            //    .Join(_db.Person, joined => joined.fp2.PersonId, p => p.PersonId, (joined, p) => new { joined, p }) // Get collaborator details
+            //    .Join(_db.Job, joined => joined.joined.fp2.JobId, j => j.JobId, (joined, j) => new
+            //    {
+            //        Collaborator = joined.p,
+            //        Job = j,
+            //        FilmId = joined.joined.fp2.FilmId, // Include FilmId to count distinct films
+            //        Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
+            //    })
+            //    .GroupBy(x => new { x.Collaborator.PersonId, x.Job.JobId }) // Group by collaborator and job
+            //    .Select(group => new PersonJobCount
+            //    {
+            //        Person = group.First().Collaborator,
+            //        Job = group.First().Job,
+            //        JobCount = group.Select(x => x.FilmId).Distinct().Count(), // Count unique films instead of job entries
+            //        EarliestYear = group.Min(x => x.Year),
+            //        LatestYear = group.Max(x => x.Year)
+            //    })
+            //    .OrderByDescending(pjc => pjc.JobCount)
+            //    .ToList();
+
             var collaborations = _db.Film_Person
                 .Where(fp1 => fp1.PersonId == id) // Get all films the given person worked on
                 .Join(_db.Film_Person, fp1 => fp1.FilmId, fp2 => fp2.FilmId, (fp1, fp2) => new { fp1, fp2 }) // Find others who worked on those films
@@ -113,19 +160,22 @@ namespace FilmDB.Controllers
                 {
                     Collaborator = joined.p,
                     Job = j,
+                    FilmId = joined.joined.fp2.FilmId, // Include FilmId to count distinct films
                     Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
                 })
-                .GroupBy(x => new { x.Collaborator.PersonId, x.Job.JobId }) // Group by collaborator and job
+                .AsEnumerable()
+                .GroupBy(x => x.Collaborator.PersonId) // Group by collaborator (not job, since we're aggregating jobs)
                 .Select(group => new PersonJobCount
                 {
                     Person = group.First().Collaborator,
-                    Job = group.First().Job,
-                    JobCount = group.Count(),
+                    Job = new Job { Title = string.Join(", ", group.Select(x => x.Job.Title).Distinct()) }, // Combine all jobs into a single string
+                    JobCount = group.Select(x => x.FilmId).Distinct().Count(), // Count unique films instead of job entries
                     EarliestYear = group.Min(x => x.Year),
                     LatestYear = group.Max(x => x.Year)
                 })
                 .OrderByDescending(pjc => pjc.JobCount)
                 .ToList();
+
 
             // Create a collaboration model
             var collaborationModel = new Collaboration

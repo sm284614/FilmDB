@@ -10,67 +10,122 @@
 			</a>
 		}
 	</div>
+	<div id="yearSlider"></div>
+	<p>Selected years: <span id="selectedYears"></span></p>
 	<div id="genreGraphContainer" class="mt-4"></div>
 </div>
 
 <!-- jQuery for AJAX -->
 <script src="/_framework/aspnetcore-browser-refresh.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
+<!-- genre graph creation -->
+<!-- Genre Graph Creation -->
 <script>
-	$(document).ready(
-		function () {
-		$(".genre-button").click(function () {
-			var genre_id = $(this).data("id");
-			// Show "Loading..." message while waiting for the AJAX request
-			$.ajax({
-				url: "/Genre/GenreGraph",
-				type: "GET",
-				data: { genre_id: genre_id },
-				success: function (data) {
-					 console.log("AJAX call success");  // Check response from server
-					$("#genreGraphContainer").html(data).fadeIn(); // Load table inside div
-					initializeChart(); // Call function to initialize Chart.js
-				},
-				error: function () {
-					console.log("AJAX call failed");  // Debugging line
-					$("#genreGraphContainer").html("<p class='text-danger'>Error loading data.</p>");
-				}
+	document.addEventListener("DOMContentLoaded", function () {
+		let genreChart; // Store chart instance globally
+		let fullLabels = [];
+		let fullData = [];
+
+		document.querySelectorAll(".genre-button").forEach(button => {
+			button.addEventListener("click", function () {
+				var genreId = this.dataset.id;
+
+				// Show "Loading..." message while waiting for the AJAX request
+				const container = document.getElementById("genreGraphContainer");
+				container.innerHTML = "<p>Loading...</p>";
+
+				fetch(`/Genre/GenreGraph?genre_id=${genreId}`)
+					.then(response => response.text())
+					.then(data => {
+						console.log("AJAX call success");
+						container.innerHTML = data; // Insert response into container
+						initializeChart(); // Call function to initialize Chart.js
+					})
+					.catch(error => {
+						console.error("AJAX call failed", error);
+						container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
+					});
 			});
 		});
-	});
+
 		function initializeChart() {
-		var ctx = document.getElementById('genreChart').getContext('2d');
-		var genreChart = new Chart(ctx, {
-			type: 'bar',
-			data: {
-				labels: JSON.parse($("#genreChart").attr("data-labels")),
-				datasets: [{
-					label: 'Film Count',
-					data: JSON.parse($("#genreChart").attr("data-data")),
-					backgroundColor: 'rgba(54, 162, 235, 0.8)',
-					borderColor: 'rgba(54, 162, 235, 1)',
-					borderWidth: 1
-				}]
-			},
-			options: {
-				responsive: true,
-				onClick: function (event, elements) {
-					if (elements.length > 0) {
-						const index = elements[0].index;
-						const year = this.data.labels[index];
-						const genre = $("#genreChart").attr("data-genre");
+			const chartElement = document.getElementById('genreChart');
+			if (!chartElement) return;
 
-						window.location.href = `/Film/GenreYearDetail?genre=${genre}&year=${year}`;
-					}
-				},
-				scales: { y: { beginAtZero: true } },
-				plugins: { legend: { display: false } }
+			var ctx = chartElement.getContext('2d');
+			fullLabels = JSON.parse(chartElement.getAttribute("data-labels")); // Store full labels
+			fullData = JSON.parse(chartElement.getAttribute("data-data")); // Store full dataset
+			var genre = chartElement.getAttribute("data-genre");
+
+			if (genreChart) {
+				genreChart.destroy(); // Destroy existing chart before creating a new one
 			}
+
+			genreChart = new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: fullLabels,
+					datasets: [{
+						label: 'Film Count',
+						data: fullData,
+						backgroundColor: 'rgba(54, 162, 235, 0.8)',
+						borderColor: 'rgba(54, 162, 235, 1)',
+						borderWidth: 1
+					}]
+				},
+				options: {
+					responsive: true,
+					onClick: function (event, elements) {
+						if (elements.length > 0) {
+							const index = elements[0].index;
+							const year = this.data.labels[index];
+
+							window.location.href = `/Film/GenreYearDetail?genre=${genre}&year=${year}`;
+						}
+					},
+					scales: { y: { beginAtZero: true } },
+					plugins: { legend: { display: false } }
+				}
+			});
+		}
+
+		// Year slider logic
+		var slider = document.getElementById("yearSlider");
+		noUiSlider.create(slider, {
+			start: [1900, 2025],
+			connect: true,
+			range: { 'min': 1900, 'max': 2025 },
+			step: 1
 		});
-	}
 
+		var selectedYears = document.getElementById("selectedYears");
+		slider.noUiSlider.on("update", function (values) {
+			var minYear = Math.round(values[0]);
+			var maxYear = Math.round(values[1]);
+			selectedYears.textContent = `${minYear} - ${maxYear}`;
+
+			// Filter chart data based on the selected year range
+			updateChart(minYear, maxYear);
+		});
+
+		function updateChart(minYear, maxYear) {
+			if (!genreChart) return;
+
+			let filteredLabels = [];
+			let filteredData = [];
+
+			for (let i = 0; i < fullLabels.length; i++) {
+				let year = parseInt(fullLabels[i]);
+				if (year >= minYear && year <= maxYear) {
+					filteredLabels.push(fullLabels[i]);
+					filteredData.push(fullData[i]);
+				}
+			}
+
+			// Update chart with new data
+			genreChart.data.labels = filteredLabels;
+			genreChart.data.datasets[0].data = filteredData;
+			genreChart.update();
+		}
+	});
 </script>
-
-
-
