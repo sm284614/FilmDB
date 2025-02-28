@@ -1,0 +1,28 @@
+﻿@using FilmDB.Models.Database
+@model IEnumerable<Character>
+<div class="container">
+	<div class="d-flex justify-content-between align-items-center">
+		<h1>Film Characters</h1>
+		<form id="characterSearchForm" class="d-flex">
+			<input type="text" id="characterSearchQuery" name="characterSearchQuery" class="form-control me-2" placeholder="Search Characters" required />
+			<button type="submit" class="btn btn-primary">Search</button>
+		</form>
+	</div>
+	<div id="characterTableContainer" class="characterTable"></div>
+</div>
+
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		document.getElementById("characterSearchForm").addEventListener("submit", function (event) {
+			event.preventDefault(); // Prevent full page reload
+			document.getElementById("characterTableContainer").innerHTML = "Loading data...";
+			const query = document.getElementById("characterSearchQuery").value;
+			fetch(`/Character/CharacterSearch?query=${encodeURIComponent(query)}`)
+				.then(response => response.text())
+				.then(data => {
+					document.getElementById("characterTableContainer").innerHTML = data;
+				})
+				.catch(error => console.error("Error loading characters:", error));
+		});
+	});
+</script>

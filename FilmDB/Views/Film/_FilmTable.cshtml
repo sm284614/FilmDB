@@ -1,4 +1,5 @@
-﻿@model List<Film>
+﻿@using FilmDB.Models.Database
+@model List<Film>
 <div>
 	@if (ViewBag.FilterDescription != null)
 	{
@@ -18,9 +19,10 @@
 <div class="table-responsive">
 	<table class="table table-striped table-hover">
 		<thead style="position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
-		<th>Title</th>
-		<th>Year</th>
-		<th>Run time</th>
+			<th class="w-70">Title</th>
+			<th class="w-10">Year</th>
+			<th class="w-10">Run time</th>
+			<th class="w-5 text-center">Web</th
 		</thead>
 		<tbody>
 			@foreach (var film in Model)
@@ -37,6 +39,14 @@
 						</a>
 					</td>
 					<td>@film.RunTimeMinutes minutes</td>
+					<td class="text-center">
+						@{
+							string query = $"https://www.google.com/search?q={Uri.EscapeDataString(film.Title)},+{film.Year}";
+						}
+						<a href="@query" target="_blank" rel="noopener noreferrer">
+							<img src="/image/box-arrow-up-right.svg" alt="Search for @film.Title" />
+						</a>
+					</td>
 				</tr>
 			}
 		</tbody>

@@ -35,6 +35,9 @@ body {
 .w-8 {
     width: 7.7%;
 }
+.w-5 {
+    width: 5%;
+}
 
 #filmTableContainer {
     display: flex;
@@ -44,7 +47,7 @@ body {
 
 .filmTable {
    min-height:0;
-   max-height: 550px;
+   max-height: 540px;
    overflow-y: auto;
 
 }

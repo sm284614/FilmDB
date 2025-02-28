@@ -2,9 +2,9 @@
 
 namespace FilmDB.Models
 {
-    public class Collaboration
+    public class PersonFilm
     {
         public Person Person { get; set; }
-        public List<PersonJobCount> CollaborationList { get; set; }
+        public Film Film { get; set; }
     }
 }

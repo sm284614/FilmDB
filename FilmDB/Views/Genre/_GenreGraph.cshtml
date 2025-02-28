@@ -7,7 +7,7 @@
                 data-labels='@Html.Raw(Json.Serialize(Model.FilmYears.Select(f => f.Year).ToList()))'
                 data-data='@Html.Raw(Json.Serialize(Model.FilmYears.Select(f => f.FilmCount).ToList()))'
                 data-genre="@Model.Name"
-                width="400" height="180">
+                width="500" height="190">
         </canvas>
     </div>
 </div>

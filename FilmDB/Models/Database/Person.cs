@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FilmDB.Models
+namespace FilmDB.Models.Database
 {
     public class Person
     {
+        [Key]
         [Column("person_id")]
         public string PersonId { get; set; } = "";
         [Column("name")]

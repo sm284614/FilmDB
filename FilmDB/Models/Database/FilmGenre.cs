@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FilmDB.Models
+namespace FilmDB.Models.Database
 {
     public class FilmGenre
     {

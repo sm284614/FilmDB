@@ -1,18 +1,19 @@
-﻿@{
+﻿@using FilmDB.Models.Database
+@{
 	ViewData["Title"] = "Film Genres";
 }
 <div class="container">
-	<div class="col-11 mx-auto">
+	<div class="col-12 mx-auto">
 		@foreach (Genre genre in Model)
 		{
-			<a data-id="@genre.GenreId" class="btn genre-button btn-primary w-20 m-1">
+			<a data-id="@genre.GenreId" class="btn genre-button btn-secondary w-8 m-x">
 				@genre.Name
 			</a>
 		}
 	</div>
-	<div id="yearSlider"></div>
+	<div id="yearSlider" class="my-2"></div>
 	<p>Selected years: <span id="selectedYears"></span></p>
-	<div id="genreGraphContainer" class="mt-4"></div>
+	<div id="genreGraphContainer" class="mt-1"></div>
 </div>
 
 <!-- jQuery for AJAX -->
@@ -29,7 +30,13 @@
 		document.querySelectorAll(".genre-button").forEach(button => {
 			button.addEventListener("click", function () {
 				var genreId = this.dataset.id;
-
+				// Remove highlight from all buttons
+				document.querySelectorAll(".genre-button").forEach(btn => {
+					btn.classList.remove("btn-primary");
+					btn.classList.add("btn-secondary"); // Reset all to default
+				});
+				this.classList.remove("btn-secondary"); // Reset color
+				this.classList.add("btn-primary");
 				// Show "Loading..." message while waiting for the AJAX request
 				const container = document.getElementById("genreGraphContainer");
 				container.innerHTML = "<p>Loading...</p>";
@@ -37,12 +44,10 @@
 				fetch(`/Genre/GenreGraph?genre_id=${genreId}`)
 					.then(response => response.text())
 					.then(data => {
-						console.log("AJAX call success");
 						container.innerHTML = data; // Insert response into container
 						initializeChart(); // Call function to initialize Chart.js
 					})
 					.catch(error => {
-						console.error("AJAX call failed", error);
 						container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
 					});
 			});
@@ -51,12 +56,25 @@
 		function initializeChart() {
 			const chartElement = document.getElementById('genreChart');
 			if (!chartElement) return;
+			
+			var slider = document.getElementById("yearSlider");
+			let minYear = Math.round(slider.noUiSlider.get()[0]);
+			let maxYear = Math.round(slider.noUiSlider.get()[1]);
 
 			var ctx = chartElement.getContext('2d');
+			var genre = chartElement.getAttribute("data-genre");
 			fullLabels = JSON.parse(chartElement.getAttribute("data-labels")); // Store full labels
 			fullData = JSON.parse(chartElement.getAttribute("data-data")); // Store full dataset
-			var genre = chartElement.getAttribute("data-genre");
+			let filteredLabels = [];
+			let filteredData = [];
 
+			for (let i = 0; i < fullLabels.length; i++) {
+				let year = parseInt(fullLabels[i]);
+				if (year >= minYear && year <= maxYear) {
+					filteredLabels.push(fullLabels[i]);
+					filteredData.push(fullData[i]);
+				}
+			}
 			if (genreChart) {
 				genreChart.destroy(); // Destroy existing chart before creating a new one
 			}
@@ -64,10 +82,10 @@
 			genreChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
-					labels: fullLabels,
+					labels: filteredLabels,
 					datasets: [{
 						label: 'Film Count',
-						data: fullData,
+						data: filteredData,
 						backgroundColor: 'rgba(54, 162, 235, 0.8)',
 						borderColor: 'rgba(54, 162, 235, 1)',
 						borderWidth: 1
@@ -92,9 +110,9 @@
 		// Year slider logic
 		var slider = document.getElementById("yearSlider");
 		noUiSlider.create(slider, {
-			start: [1900, 2025],
+			start: [1910, 2025],
 			connect: true,
-			range: { 'min': 1900, 'max': 2025 },
+			range: { 'min': 1910, 'max': 2025 },
 			step: 1
 		});
 

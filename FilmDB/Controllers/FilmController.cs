@@ -1,8 +1,7 @@
 ﻿using FilmDB.Data;
 using FilmDB.Models;
+using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace FilmDB.Controllers
 {
@@ -74,6 +73,7 @@ namespace FilmDB.Controllers
                 .Distinct() // Ensure no duplicate films
                 .ToList();
             ViewBag.FilterDescription = $"{genre} films from {year}";
+            ViewBag.FilmCount = films.Count;
             // Pass data to the view
             return View("Film", films);
         }
@@ -120,7 +120,8 @@ namespace FilmDB.Controllers
                  {
                      PersonId = joined.p.PersonId, // Person's ID
                      PersonName = joined.p.Name,     // Person's Name
-                     JobTitle = j.Title        // Job Title
+                     JobTitle = j.Title,        // Job Title
+                     JobDetail = "?"
                  })
                  .OrderBy(pjd => pjd.JobTitle)
                  .ToList();  // Execute the LINQ query and convert to list

@@ -1,4 +1,6 @@
-﻿namespace FilmDB.Models
+﻿using FilmDB.Models.Database;
+
+namespace FilmDB.Models
 {
     public class FilmDetail
     {
