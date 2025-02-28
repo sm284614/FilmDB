@@ -1,4 +1,8 @@
-A simple project to learn the basics of ASP.NET web apps with MVC. Database definition is as follows:
+See the Azure-hosted version https://filmdb20250207212520.azurewebsites.net/
+
+A simple ASP.NET web app (MVC) using SQL server for a film database. 
+
+Database definition is as follows:
 
 film (film_id*, title, year, run_time_minutes)
 person(person_id*, name, birth_year, death_year)
