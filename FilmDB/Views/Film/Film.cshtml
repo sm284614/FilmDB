@@ -22,9 +22,9 @@
 				</a>
 			}
 		</div>
-	} 
-	<div id="filmTableContainer" class="filmTable">
-		@await Html.PartialAsync("_FilmTable", (IEnumerable<Film>)Model) 
+	}
+	<div id="filmTableContainer" class="contentTable">
+		@await Html.PartialAsync("_FilmTable", (IEnumerable<Film>)Model)
 	</div>
 </div>
 <script>
@@ -41,14 +41,23 @@
 					selectedGenres = selectedGenres.filter(id => id !== genreId); // Remove if already selected
 					this.classList.remove("btn-primary");
 					this.classList.add("btn-secondary"); // Highlight selected
+					updateFilmTable();
 				}
 				else
 				{
-					selectedGenres.push(genreId); // Add if not selected
-					this.classList.remove("btn-secondary"); // Reset color
-					this.classList.add("btn-primary");
+					if (selectedGenres.length < 3)
+					{
+						selectedGenres.push(genreId); // Add if not selected
+						this.classList.remove("btn-secondary"); // Reset color
+						this.classList.add("btn-primary");
+						updateFilmTable();
+					}
+					else
+					{
+						this.classList.add("btn-danger"); // Temporarily add red color
+						setTimeout(() => this.classList.remove("btn-danger"), 250); // Remove after 0.5 sec
+					}
 				}
-				updateFilmTable();
 			});
 		});
 

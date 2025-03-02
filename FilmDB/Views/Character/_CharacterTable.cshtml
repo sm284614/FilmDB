@@ -1,22 +1,22 @@
 ﻿@using FilmDB.Models.Database
-@model List<Character>
+@model List<CharacterCount>
 <div class="table-responsive">
 	<table class="table table-striped table-hover">
 		<thead style="position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
 			<th class="w-70">Name</th>
-			<th class="w-30">?</th>
+			<th class="w-30">Credits</th>
 		</thead>
 		<tbody>
-			@foreach (var Character in Model)
+			@foreach (var characterCount in Model)
 			{
 				<tr>
 					<td>
-						<a asp-controller="Character" asp-action="CharacterDetail" asp-route-characterId="@Character.CharacterId">
-							@Character.Name
+						<a asp-controller="Character" asp-action="CharacterDetail" asp-route-characterId="@characterCount.Character.CharacterId">
+							@characterCount.Character.Name
 						</a>
 					</td>
 					<td>
-						?
+						@characterCount.Count
 					</td>					
 				</tr>
 			}

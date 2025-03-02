@@ -7,6 +7,5 @@ namespace FilmDB.Models
         public string PersonId { get; set; } = "";
         public string PersonName { get; set; } = "";
         public string JobTitle { get; set; } = "";
-        public string JobDetail { get; set; } = "";
     }
 }

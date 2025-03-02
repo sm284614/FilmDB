@@ -18,10 +18,13 @@ namespace FilmDB.Controllers
         public IActionResult CharacterSearch(string query)
         {
             var characters = _db.Character
-                .Where(c => c.Name.Contains(query))
-                .OrderBy(c => c.Name)
+                .Where(c => c.Name.Contains(query))                               
+                .Select(c => new CharacterCount
+                {
+                    Character = c,
+                    Count = _db.Film_Person_Character.Count(fpc => fpc.CharacterId == c.CharacterId)
+                }).OrderByDescending(cc => cc.Count)
                 .ToList();
-
             return PartialView("_CharacterTable", characters);
         }
         public IActionResult CharacterDetail(int characterId)

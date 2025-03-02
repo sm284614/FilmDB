@@ -112,8 +112,33 @@ namespace FilmDB.Controllers
                 .Select(joined => joined.g) // Select the Genre object from the joined result
                 .ToList(); // Execute the query and get the list
 
-            // Query the people involved in the film and their jobs
-            var personJobDetail = _db.Film_Person
+            // Query actors (JobTitle = "Actor" or "Self") and set JobTitle to the Character Name
+            var cast = _db.Film_Person
+                .Where(fp => fp.FilmId.ToString() == id)
+                .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
+                .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new { joined.fp, joined.p, j }) // Join with Job
+                .Where(joined => joined.j.Title == "Actor" || joined.j.Title == "Self") // Only actors
+                .GroupJoin(_db.Film_Person_Character,
+                           joined => new { joined.fp.FilmId, joined.fp.PersonId },
+                           fpc => new { fpc.FilmId, fpc.PersonId },
+                           (joined, fpcs) => new { joined.fp, joined.p, joined.j, fpcs }) // Left join to characters
+                .SelectMany(joined => joined.fpcs.DefaultIfEmpty(), (joined, fpc) => new { joined.fp, joined.p, joined.j, fpc })
+                .GroupJoin(_db.Character,
+                           j => j.fpc.CharacterId,
+                           c => c.CharacterId,
+                           (j, characters) => new { j.fp, j.p, j.j, CharacterName = characters.Select(c => c.Name).FirstOrDefault() })
+                .Select(j => new PersonJob
+                {
+                    PersonId = j.p.PersonId,  // Person's ID
+                    PersonName = j.p.Name,    // Person's Name
+                    JobTitle = j.CharacterName ?? "" // Use CharacterName or empty string
+                })
+                .OrderBy(pjd => pjd.PersonName) // Sort alphabetically by actor name
+                .ToList();  // Execute the LINQ query and convert to list
+
+
+            // Query the crew involved in the film and their jobs
+            var crew = _db.Film_Person
                  .Where(fp => fp.FilmId.ToString() == id)
                  .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
                  .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new PersonJob
@@ -121,8 +146,8 @@ namespace FilmDB.Controllers
                      PersonId = joined.p.PersonId, // Person's ID
                      PersonName = joined.p.Name,     // Person's Name
                      JobTitle = j.Title,        // Job Title
-                     JobDetail = "?"
                  })
+                 .Where(pjd => pjd.JobTitle != "Actor" && pjd.JobTitle != "Self") // Exclude "Actor" and "Self"
                  .OrderBy(pjd => pjd.JobTitle)
                  .ToList();  // Execute the LINQ query and convert to list
 
@@ -131,7 +156,8 @@ namespace FilmDB.Controllers
             {
                 Film = film,
                 Genres = genres,
-                PersonJobDetail = personJobDetail
+                Cast = cast,
+                Crew = crew
             };
 
             return View(filmDetail);

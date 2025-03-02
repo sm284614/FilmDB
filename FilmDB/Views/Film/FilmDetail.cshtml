@@ -1,4 +1,7 @@
 ﻿@model FilmDetail
+@{
+    ViewData["Title"] = @Model.Film.Title;
+}
 
 <div class="container">
     <h1>@Model.Film.Title</h1>
@@ -10,7 +13,7 @@
     <!-- Job Filter Buttons -->
     <div class="d-flex align-items-center">
         <button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Reset Filter -->
-        @foreach (var jobTitle in Model.PersonJobDetail.Select(pj => pj.JobTitle).Distinct())
+        @foreach (var jobTitle in Model.Crew.Select(pj => pj.JobTitle).Distinct())
         {
             <button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
                 @jobTitle
@@ -18,16 +21,43 @@
         }
     </div>
 
-    <h3>Cast and Crew</h3>
+    <h3>Cast</h3>
     <table class="table">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Job Title</th>
+                <th class="w-50">Name</th>
+                <th class="w-50">Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (PersonJob personJob in Model.Cast)
+            {
+                <tr job="@personJob.JobTitle">
+                    <td>
+                        <a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
+                            @personJob.PersonName
+                        </a>
+                    </td>
+                    <td>
+
+                        @personJob.JobTitle
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3>Crew</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="w-50">Name</th>
+                <th class="w-50">Job Title</th>
             </tr>
         </thead>
         <tbody id="filmTableBody">
-            @foreach (var personJob in Model.PersonJobDetail)
+            @foreach (PersonJob personJob in Model.Crew)
             {
                 <tr class="film-row" data-job="@personJob.JobTitle">
                     <td>

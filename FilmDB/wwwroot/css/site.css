@@ -32,6 +32,9 @@ body {
 .m-x {
   margin: 0.1rem !important;
 }
+.w-16 {
+    width: 16%;
+}
 .w-8 {
     width: 7.7%;
 }
@@ -44,26 +47,31 @@ body {
     flex-direction: column;
     height: 100vh; /* Full viewport height */
 }
+#characterTableContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+}
 
-.filmTable {
+.contentTable {
    min-height:0;
    max-height: 540px;
    overflow-y: auto;
 
 }
 
-.filmTable::-webkit-scrollbar {
-    width: 8px;
-}
+.contentTable::-webkit-scrollbar {
+        width: 8px;
+    }
 
-.filmTable::-webkit-scrollbar-thumb {
+.contentTable::-webkit-scrollbar-thumb {
     background-color: #888;
     border-radius: 4px;
 }
 
-.filmTable::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
+.contentTable::-webkit-scrollbar-thumb:hover {
+        background-color: #555;
+    }
 
 /*! nouislider - 14.7.0 - 4/6/2021 */
 .noUi-target, .noUi-target * {

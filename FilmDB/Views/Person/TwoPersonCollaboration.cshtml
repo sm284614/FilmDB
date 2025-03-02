@@ -9,6 +9,7 @@
 			Person2Roles = string.Join(", ", g.Select(c => c.Job2.Title).Distinct())  // Merge unique roles
 		})
 		.ToList();
+	ViewData["Title"] = "Film collaborations";
 }
 <div class="container">
 	<div>

@@ -8,8 +8,11 @@
 			<button type="submit" class="btn btn-primary">Search</button>
 		</form>
 	</div>
-	<div id="characterTableContainer" class="characterTable"></div>
+	<div id="characterTableContainer" class="contentTable">
 </div>
+@{
+	ViewData["Title"] = "Film Characters";
+}
 
 <script>
 	document.addEventListener("DOMContentLoaded", function () {

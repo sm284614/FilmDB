@@ -13,11 +13,13 @@ namespace FilmDB.Controllers
         {
             _db = db;
         }
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult Genre()
         {
             List<Genre> genreList = _db.Genre.ToList();
             return View(genreList);
         }
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreGraph(int genre_id)
         {
             var genre = _db.Genre
@@ -47,6 +49,7 @@ namespace FilmDB.Controllers
 
             return PartialView("_GenreGraph", genreData);  // Return as a partial view
         }
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreInfo(int genre_id)
         {
             var genreData = _db.Genre

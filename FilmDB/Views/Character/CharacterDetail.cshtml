@@ -1,5 +1,8 @@
 ﻿@using FilmDB.Models
 @model List<PersonFilm>
+@{
+	ViewData["Title"] = @ViewBag.CharacterName;
+}
 <div class="container">
 	<div class="d-flex justify-content-between align-items-center">
 		<h1 class="d-inline">@ViewBag.CharacterName</h1>

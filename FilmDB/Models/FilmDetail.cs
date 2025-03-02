@@ -6,6 +6,7 @@ namespace FilmDB.Models
     {
         public Film Film { get; set; }
         public List<Genre> Genres { get; set; }
-        public List<PersonJob> PersonJobDetail { get; set; }
+        public List<PersonJob> Cast { get; set; }
+        public List<PersonJob> Crew { get; set; }
     }
 }
