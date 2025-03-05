@@ -7,7 +7,7 @@ namespace FilmDB.Models.Database
     {
         [Key]
         [Column("genre_id")]
-        public byte GenreId { get; set; }
+        public int GenreId { get; set; }
         [Column("name")]
         public string Name { get; set; } = "";
     }

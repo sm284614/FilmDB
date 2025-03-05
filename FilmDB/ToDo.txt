@@ -1,0 +1,13 @@
+Film view:
+	* add year slider
+FilmCharacter
+	* add title to character search
+PersonFilmography
+	* remove duplicate film rows
+	* concat job titles
+	* ensure filtering account for concat job titles
+Genre
+	* allow multiselection of genres for graph of rom-com etc.
+	* allow multiselection of genres for line view compare over time
+Character
+	* add word cloud of popular character names to home page

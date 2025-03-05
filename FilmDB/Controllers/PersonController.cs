@@ -3,34 +3,59 @@ using FilmDB.Models;
 using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FilmDB.Controllers
 {
     public class PersonController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public PersonController(ApplicationDbContext db)
+        private readonly IMemoryCache _cache;
+        public PersonController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
+            _cache = cache;
         }
         public IActionResult Person()
         {
-            List<Person> personList = _db.Person.Take(400).ToList();
+            var personList = _db.Person
+                .Select(p => new PersonFilm
+                {
+                    Person = p,
+                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId),
+                    Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
+                })                
+                .Take(100) // Limit to some results
+                .ToList();
+
             return View(personList);
         }
         public IActionResult PersonSearch(string query)
         {
-            var results = _db.Person
-                .Where(p => p.Name.Contains(query))
-                .OrderBy(p => p.Name)
+            query = query.Trim();
+
+            // Query to get people, their first film, and total film count
+            var personFilms = _db.Person
+                .Where(p => p.Name.Contains(query)) // Filter people based on the query
+                .Select(p => new PersonFilm
+                {
+                    Person = p,
+                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId), // Get the first film
+                    Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
+                })
+                .OrderByDescending(pf => pf.Count) // Sort by person name
+                .Take(200) // Limit to 100 results for pagination
                 .ToList();
 
-            return View("Person", results);
+            // Set the result data in the ViewBag
+            ViewBag.ResultData = $"Showing {personFilms.Count} results for '{query}'";
+
+            // Return the view with the result data
+            return View("Person", personFilms);
         }
         public IActionResult PersonFilmography(string id)
         {
-            var person = _db.Person
-                            .FirstOrDefault(p => p.PersonId == id);
+            var person = _db.Person.FirstOrDefault(p => p.PersonId == id);
 
             if (person == null)
             {
@@ -73,36 +98,39 @@ namespace FilmDB.Controllers
             {
                 return NotFound(); // Return 404 if job not found
             }
-
-            // Query to get a list of people with their job count for the given job ID
-            var personJobCounts = _db.Film_Person
-                .Where(fp => fp.JobId == id) // Filter by the job ID
-                .GroupBy(fp => fp.PersonId) // Group by person
-                .Select(group => new PersonJobCount
-                {
-                    Person = _db.Person.FirstOrDefault(p => p.PersonId == group.Key), // Get person details
-                    JobCount = group.Count(), // Count occurrences of this job for the person
-                    EarliestYear = _db.Film_Person
-                    .Where(fp => fp.PersonId == group.Key)
-                    .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year) // Join Film_Person and Film to get years
-                    .Min(), // Get the earliest year this person worked on a film
-                    LatestYear = _db.Film_Person
-                    .Where(fp => fp.PersonId == group.Key)
-                    .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year) // Join Film_Person and Film to get years
-                    .Max() // Get the latest year this person worked on a film
-                })
-                .OrderByDescending(pjc => pjc.JobCount) // Order by job count (most frequent first)
-                .Take(100)
-                .ToList();
+            var cacheKey = $"JobCount_{id}";
+            var personJobCounts = _cache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(6);
+                return _db.Film_Person
+                    .Where(fp => fp.JobId == id)
+                    .GroupBy(fp => fp.PersonId)
+                    .Select(group => new PersonJobSummary
+                    {
+                        Person = _db.Person.FirstOrDefault(p => p.PersonId == group.Key),
+                        JobCount = group.Count(),
+                        EarliestYear = _db.Film_Person
+                            .Where(fp => fp.PersonId == group.Key)
+                            .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year)
+                            .Min(),
+                        LatestYear = _db.Film_Person
+                            .Where(fp => fp.PersonId == group.Key)
+                            .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year)
+                            .Max()
+                    })
+                    .OrderByDescending(pjc => pjc.JobCount)
+                    .Take(100)
+                    .ToList();
+            });
 
             // Create the JobPersonJobCount model
             var jobPersonJobCount = new JobCount
             {
                 Job = job,
-                PersonJobs = personJobCounts
+                PersonJobSummary = personJobCounts
             };
 
-            return View(jobPersonJobCount);
+            return PartialView("_JobCount", jobPersonJobCount);
         }
         public IActionResult Collaboration(string id)
         {

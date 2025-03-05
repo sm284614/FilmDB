@@ -18,6 +18,7 @@ namespace FilmDB
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddControllersWithViews();
+            builder.Services.AddMemoryCache();
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             WebApplication app = builder.Build();

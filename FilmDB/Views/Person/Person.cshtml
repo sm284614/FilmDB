@@ -1,4 +1,5 @@
-﻿@{
+﻿@model List<PersonFilm>
+@{
 	ViewData["Title"] = "People in Film";
 }
 <div class="container">
@@ -9,24 +10,34 @@
 			<button type="submit" class="btn btn-primary">Search</button>
 		</form>
 	</div>
-	<div class="table-responsive">
+	@if (ViewBag.ResultData != null)
+	{
+		<p>@ViewBag.ResultData</p>
+	}
+	<div class="table-responsive contentTable">
 		<table class="table table-striped table-hover">
 			<thead>
 			<th>Name</th>
-			<th>Birth Year</th>
-			<th>Death Year</th>
+			<th>Debut Film</th>
+			<th>Film credits</th>
+			<th>Life</th>
 			</thead>
 			<tbody>
-				@foreach (var person in Model)
+				@foreach (var personFilm in Model)
 				{
 					<tr>
 						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@person.PersonId">
-								@person.Name
+							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personFilm.Person.PersonId">
+								@personFilm.Person.Name
 							</a>
 						</td>
-						<td>@person.BirthYear</td>
-						<td>@person.DeathYear</td>
+						<td>
+							<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@personFilm.Film.FilmId">
+								@personFilm.Film.Title
+							</a>
+						</td>
+						<td>@personFilm.Count</td>
+						<td>@personFilm.Person.BirthYear - @personFilm.Person.DeathYear</td>
 					</tr>
 				}
 			</tbody>

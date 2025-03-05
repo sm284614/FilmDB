@@ -14,5 +14,7 @@ namespace FilmDB.Models.Database
         public short Year { get; set; }
         [Column("run_time_minutes")]
         public short RunTimeMinutes { get; set; }
+        [Column("genre_bit_field")]
+        public int GenreBitField { get; set; }
     }
 }

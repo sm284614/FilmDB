@@ -65,7 +65,7 @@
 			const queryString = selectedGenres.length > 0 ? `?genreIds=${selectedGenres.join("&genreIds=")}` : "";
 			const container = document.getElementById("filmTableContainer")
 			container.innerHTML = "<p>Loading...</p>";
-			fetch(`/Film/FilterFilmsByGenre${queryString}`)
+			fetch(`/Film/FilterFilmsByGenreBitwise${queryString}`)
 				.then(response => response.text())
 				.then(data => {
 					container.innerHTML = data;

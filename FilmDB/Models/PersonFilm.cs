@@ -6,5 +6,6 @@ namespace FilmDB.Models
     {
         public Person Person { get; set; }
         public Film Film { get; set; }
+        public int Count { get; set; } = 0;
     }
 }

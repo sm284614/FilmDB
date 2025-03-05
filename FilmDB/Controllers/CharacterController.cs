@@ -1,5 +1,6 @@
 ﻿using FilmDB.Data;
 using FilmDB.Models;
+using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FilmDB.Controllers
@@ -15,10 +16,22 @@ namespace FilmDB.Controllers
         {
             return View();
         }
+        public IActionResult CharacterCloud()
+        {
+            var characters = _db.Character
+            .Select(c => new CharacterCount
+            {
+                Character = c,
+                Count = _db.Film_Person_Character.Count(fpc => fpc.CharacterId == c.CharacterId)
+            }).OrderByDescending(cc => cc.Count)
+            .Take(100)
+            .ToList();
+            return View(characters);
+        }
         public IActionResult CharacterSearch(string query)
         {
             var characters = _db.Character
-                .Where(c => c.Name.Contains(query))                               
+                .Where(c => c.Name.Contains(query))
                 .Select(c => new CharacterCount
                 {
                     Character = c,

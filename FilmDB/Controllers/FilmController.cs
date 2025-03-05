@@ -23,7 +23,7 @@ namespace FilmDB.Controllers
             ViewBag.GenreList = genreList;
             return View(filmList);
         }
-        public IActionResult FilterFilmsByGenre(List<short> genreIds)
+        public IActionResult FilterFilmsByGenre(List<int> genreIds)
         {
             if (genreIds.Count > 0)
             {
@@ -49,6 +49,35 @@ namespace FilmDB.Controllers
                 return PartialView("_FilmTable", new List<Film>());
             }
         }
+
+        public IActionResult FilterFilmsByGenreBitwise(List<int> genreIds)
+        {
+            if (genreIds.Count > 0)
+            {
+                //film.genre_bit_field encodes genres by their id (1=adventure,2=drama,4=fantasy,8=biography etc.)
+                // Calculate the bitmask for the selected genres
+                int bitField = genreIds.Sum();
+                var films = _db.Film
+                    .Where(f => (f.GenreBitField & bitField) == bitField)
+                    .OrderByDescending(f => f.Year)
+                    .ToList();
+                var genreNames = _db.Genre
+                    .Where(g => genreIds.Contains(g.GenreId))
+                    .OrderBy(g => g.Name)
+                    .Select(g => g.Name) // Select only the names
+                    .ToList();
+                ViewBag.FilterDescription = string.Join(@"/", genreNames) + " films";
+                ViewBag.FilmCount = films.Count;
+                return PartialView("_FilmTable", films);
+            }
+            else
+            {
+                ViewBag.FilterDescription = "No genres selected";
+                ViewBag.FilmCount = 0;
+                return PartialView("_FilmTable", new List<Film>());
+            }
+        }
+
         public IActionResult FilmSearch(string query)
         {
             var films = _db.Film
@@ -124,16 +153,17 @@ namespace FilmDB.Controllers
                            (joined, fpcs) => new { joined.fp, joined.p, joined.j, fpcs }) // Left join to characters
                 .SelectMany(joined => joined.fpcs.DefaultIfEmpty(), (joined, fpc) => new { joined.fp, joined.p, joined.j, fpc })
                 .GroupJoin(_db.Character,
-                           j => j.fpc.CharacterId,
+                           j => j.fpc != null ? j.fpc.CharacterId : (int?)null, // Check if fpc is null and handle CharacterId accordingly
                            c => c.CharacterId,
-                           (j, characters) => new { j.fp, j.p, j.j, CharacterName = characters.Select(c => c.Name).FirstOrDefault() })
+                           (j, characters) => new { j.fp, j.p, j.j, CharacterName = characters.Select(c => c.Name).FirstOrDefault(), CharacterID = characters.Select(c=> c.CharacterId).FirstOrDefault() })
                 .Select(j => new PersonJob
                 {
                     PersonId = j.p.PersonId,  // Person's ID
                     PersonName = j.p.Name,    // Person's Name
+                    CharacterId = j.CharacterID,
                     JobTitle = j.CharacterName ?? "" // Use CharacterName or empty string
                 })
-                .OrderBy(pjd => pjd.PersonName) // Sort alphabetically by actor name
+                .OrderBy(pjd => pjd.JobTitle) // Sort alphabetically by actor name
                 .ToList();  // Execute the LINQ query and convert to list
 
 

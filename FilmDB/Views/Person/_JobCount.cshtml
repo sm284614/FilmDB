@@ -1,0 +1,36 @@
+﻿@{
+	ViewData["Title"] = "Top jobs in Film";
+}
+@model JobCount
+<div class="container">
+	<div class="d-flex justify-content-between align-items-center">
+		<h2>Top 100 people with most '@Model.Job.Title' credits</h2>
+	</div>
+	<div class="table-responsive contentTable">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Person</th>
+					<th>Number of films</th>
+					<th>Life</th>
+					<th>Years active</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var personJob in Model.PersonJobSummary)
+				{
+					<tr>
+						<td>
+							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.Person.PersonId">
+								@personJob.Person.Name
+							</a>
+						</td>
+						<td>@personJob.JobCount</td>
+						<td>@personJob.Person.BirthYear - @personJob.Person.DeathYear</td>
+						<td>@personJob.EarliestYear - @personJob.LatestYear</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>

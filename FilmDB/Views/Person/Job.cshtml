@@ -2,12 +2,47 @@
 	ViewData["Title"] = "Jobs in Film";
 }
 <div class="container">
+	<h1>Job Explorer</h1>
 	<div class="col-12 mx-auto">
 		@foreach (var job in Model)
 		{
-			<a asp-controller="Person" asp-action="JobCount" asp-route-id="@job.JobId" class="btn btn-secondary w-16 m-x">
+@* 			<a asp-controller="Person" asp-action="JobCount" asp-route-id="@job.JobId" class="btn btn-secondary w-16 m-x">
+				@job.Title
+			</a> *@
+			<a data-id="@job.JobId" class="btn job-button btn-secondary w-16 m-x">
 				@job.Title
 			</a>
 		}
 	</div>
+	<div id="jobCountContainer" class="mt-1"></div>
 </div>
+
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		document.querySelectorAll(".job-button").forEach(button => {
+			button.addEventListener("click", function () {
+				var jobId = this.dataset.id;
+				// Remove highlight from all buttons
+				document.querySelectorAll(".job-button").forEach(btn => { // FIXED HERE
+					btn.classList.remove("btn-primary");
+					btn.classList.add("btn-secondary"); // Reset all to default
+				});
+				this.classList.remove("btn-secondary"); // Reset color
+				this.classList.add("btn-primary");
+
+				// Show "Loading..." message while waiting for the AJAX request
+				const container = document.getElementById("jobCountContainer");
+				container.innerHTML = "<p>Loading...</p>";
+
+				fetch(`/Person/JobCount?id=${jobId}`)
+					.then(response => response.text())
+					.then(data => {
+						container.innerHTML = data; // Insert response into container
+					})
+					.catch(error => {
+						container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
+					});
+			});
+		});
+	});
+</script>

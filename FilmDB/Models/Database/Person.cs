@@ -14,5 +14,7 @@ namespace FilmDB.Models.Database
         public short? BirthYear { get; set; }
         [Column("death_year")]
         public short? DeathYear { get; set; }
+        [Column("first_film_id")]
+        public string FirstFilmId { get; set; } = "";
     }
 }

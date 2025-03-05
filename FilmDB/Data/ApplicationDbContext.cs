@@ -16,6 +16,7 @@ namespace FilmDB.Data
         public DbSet<FilmGenre> Film_Genre { get; set; }
         public DbSet<Character> Character { get; set; }
         public DbSet<FilmPersonCharacter> Film_Person_Character { get; set; }
+        public DbSet<PersonJobSummary> Person_Job_Summary { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<FilmPerson>().HasNoKey(); // Explicitly set no primary key

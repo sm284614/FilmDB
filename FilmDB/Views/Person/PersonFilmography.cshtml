@@ -1,74 +1,76 @@
 ﻿@model PersonFilmography
 @{
-    ViewData["Title"] = @Model.Person.Name + " Filography";
+	ViewData["Title"] = @Model.Person.Name + " Filography";
 }
 
 
 <div class="container">
-    <div>
-        <h1 class="d-inline">@Model.Person.Name</h1>
-        @if (Model.Person.BirthYear.HasValue)
-        {
-            <p class="d-inline">(@Model.Person.BirthYear - @(Model.Person.DeathYear.HasValue ? Model.Person.DeathYear.Value.ToString() : "present"))</p>
-        }
-    </div>
+	<div>
+		<h1 class="d-inline">@Model.Person.Name</h1>
+		@if (Model.Person.BirthYear.HasValue)
+		{
+			<p class="d-inline">(@Model.Person.BirthYear - @(Model.Person.DeathYear.HasValue ? Model.Person.DeathYear.Value.ToString() : "present")) : @Model.FilmJobs.Count film credits</p>
+		}
+	</div>
 
-    <!-- Job Filter Buttons -->
-    <div class="d-flex align-items-center">
-        <button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Button to reset filter -->
-        @foreach (var jobTitle in Model.FilmJobs.Select(fj => fj.JobTitle).Distinct())
-        {
-            <button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
-                @jobTitle
-            </button>
-        }
-        <a class="btn btn-outline-primary ms-auto"  asp-controller="Person" asp-action="Collaboration" asp-route-id="@Model.Person.PersonId">
-            View collaborations for @Model.Person.Name
-        </a>
-    </div>
+	<!-- Job Filter Buttons -->
+	<div class="d-flex align-items-center">
+		<button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Button to reset filter -->
+		@foreach (var jobTitle in Model.FilmJobs.Select(fj => fj.JobTitle).Distinct())
+		{
+			<button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
+				@jobTitle
+			</button>
+		}
+		<a class="btn btn-outline-primary ms-auto" asp-controller="Person" asp-action="Collaboration" asp-route-id="@Model.Person.PersonId">
+			View collaborations for @Model.Person.Name
+		</a>
+	</div>
 
-    <!-- Filmography Table -->
-    <div class="table-responsive">
-        <table class="table table-striped table-hover" style="width: 100%; table-layout: fixed;">
-            <thead>
-                <tr>
-                    <th style="width: auto;">Film Title</th>
-                    <th style="width: 100px;">Year</th>
-                    <th style="width: 175px;">Job Title</th>
-                </tr>
-            </thead>
-            <tbody id="filmTableBody">
-                @foreach (var filmJob in Model.FilmJobs)
-                {
-                    <tr class="film-row" data-job="@filmJob.JobTitle">
-                        <td>
-                            <a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@filmJob.FilmId">
-                                @filmJob.FilmTitle
-                            </a>
-                        </td>
-                        <td>@filmJob.FilmYear</td>
-                        <td>@filmJob.JobTitle</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+	<!-- Filmography Table -->
+	<div class="table-responsive contentTable">
+		<div class="table-responsive">
+			<table class="table table-striped table-hover" style="width: 100%; table-layout: fixed;">
+				<thead>
+					<tr>
+						<th style="width: auto;">Film Title</th>
+						<th style="width: 100px;">Year</th>
+						<th style="width: 175px;">Job Title</th>
+					</tr>
+				</thead>
+				<tbody id="filmTableBody">
+					@foreach (var filmJob in Model.FilmJobs)
+					{
+						<tr class="film-row" data-job="@filmJob.JobTitle">
+							<td>
+								<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@filmJob.FilmId">
+									@filmJob.FilmTitle
+								</a>
+							</td>
+							<td>@filmJob.FilmYear</td>
+							<td>@filmJob.JobTitle</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
 
 <!-- JavaScript for Filtering -->
 <script>
-    function filterTable(jobTitle) {
-        const rows = document.querySelectorAll('.film-row');
+	function filterTable(jobTitle) {
+		const rows = document.querySelectorAll('.film-row');
 
-        rows.forEach(row => {
-            if (jobTitle === 'all' || row.getAttribute('data-job') === jobTitle) 
-            {
-                row.style.display = ''; // Show row
-            } 
-            else 
-            {
-                row.style.display = 'none'; // Hide row
-            }
-        });
-    }
+		rows.forEach(row => {
+			if (jobTitle === 'all' || row.getAttribute('data-job') === jobTitle)
+			{
+				row.style.display = ''; // Show row
+			}
+			else
+			{
+				row.style.display = 'none'; // Hide row
+			}
+		});
+	}
 </script>

@@ -11,6 +11,6 @@ namespace FilmDB.Models.Database
         [Column("film_id")]
         public string FilmId { get; set; } = "";
         [Column("genre_id")]
-        public short GenreId { get; set; }
+        public int GenreId { get; set; }
     }
 }

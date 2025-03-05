@@ -82,8 +82,5 @@ namespace FilmDB.Controllers
 
             return View(genreData);
         }
-
-
-
     }
 }

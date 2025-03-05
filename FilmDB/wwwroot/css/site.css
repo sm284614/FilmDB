@@ -43,21 +43,23 @@ body {
 }
 
 #filmTableContainer {
-    display: flex;
+    /*display: flex;
     flex-direction: column;
-    height: 100vh; /* Full viewport height */
+    height: 100vh;*/ /* Full viewport height */
 }
 #characterTableContainer {
-    display: flex;
+    /*display: flex;
     flex-direction: column;
-    height: 100vh; /* Full viewport height */
+    height: 100vh;*/ /* Full viewport height */
 }
 
 .contentTable {
-   min-height:0;
-   max-height: 540px;
-   overflow-y: auto;
-
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    min-height: 0;
+    max-height: 540px;
+    overflow-y: auto;
 }
 
 .contentTable::-webkit-scrollbar {
