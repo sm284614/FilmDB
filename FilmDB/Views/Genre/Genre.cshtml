@@ -3,7 +3,17 @@
 	ViewData["Title"] = "Film Genres";
 }
 <div class="container">
-	<h1>Genre Explorer</h1>
+	<div class="d-flex justify-content-between align-items-center">
+		<h1>Genre Explorer</h1>
+		<div>
+			<a id="compareButton" class="btn btn-mode-select btn-primary w-10 m-x" data-mode="1">
+				Compare
+			</a>
+			<a id="combineButton" class="btn btn-mode-select btn-secondary w-10 m-x" data-mode="2">
+				Combine
+			</a>
+		</div>
+	</div>
 	<div class="col-12 mx-auto">
 		@foreach (Genre genre in Model)
 		{
@@ -13,7 +23,6 @@
 		}
 	</div>
 	<div id="yearSlider" class="my-2"></div>
-	<p>Selected years: <span id="selectedYears"></span></p>
 	<div id="genreGraphContainer" class="mt-1"></div>
 </div>
 
@@ -21,43 +30,144 @@
 <script src="/_framework/aspnetcore-browser-refresh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
 <!-- genre graph creation -->
-<!-- Genre Graph Creation -->
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
+		let minimumYear = 1910;
+		let maximumYear = 2025;
+		let graphMode = 1;
+
 		let genreChart; // Store chart instance globally
 		let fullLabels = [];
 		let fullData = [];
-
+		let selectedGenres = []; // Store selected genre IDs
 		document.querySelectorAll(".genre-button").forEach(button => {
 			button.addEventListener("click", function () {
 				var genreId = this.dataset.id;
-				// Remove highlight from all buttons
-				document.querySelectorAll(".genre-button").forEach(btn => {
-					btn.classList.remove("btn-primary");
-					btn.classList.add("btn-secondary"); // Reset all to default
-				});
-				this.classList.remove("btn-secondary"); // Reset color
-				this.classList.add("btn-primary");
-				// Show "Loading..." message while waiting for the AJAX request
-				const container = document.getElementById("genreGraphContainer");
-				container.innerHTML = "<p>Loading...</p>";
+				var adding;
+				if (selectedGenres.includes(genreId)) {
+					// Remove genre from list and reset button class
+					selectedGenres = selectedGenres.filter(id => id !== genreId);
+					this.classList.remove("btn-primary");
+					this.classList.add("btn-secondary");
+					adding = false;
+				} else {
+					// Add genre to list and set button as selected
+					genreId = this.dataset.id;
+					selectedGenres.push(genreId);
+					this.classList.remove("btn-secondary");
+					this.classList.add("btn-primary");
+					adding = true;
+				}
+				if (graphMode == 1) {	
+					if (selectedGenres.length == 1)	{
+						// Show "Loading..." message while waiting for the AJAX request
+						const container = document.getElementById("genreGraphContainer");
+						container.innerHTML = "<p>Loading...</p>";
+						genreId = selectedGenres[0];
+						fetch(`/Genre/GenreGraph?genre_id=${genreId}`)
+						.then(response => response.text())
+						.then(data => {
+							container.innerHTML = data; // Insert response into container
+							initializeChart(); // Call function to initialize Chart.js
+						})
+						.catch(error => {
+							container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
+						});
+					}
+					else if (selectedGenres.length > 1)	{
+						console.log("2+");
+						fetch(`/Genre/GenreGraphData?genre_id=${genreId}`)
+						.then(response => response.text())
+						.then(data => {
+							addGenreToChart(genreId, data);
+						})
+						.catch(error => {
+							container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
+							console.log(error);
+						});
+					}
+				}
+				else if (graphMode == 2)
+				{
 
-				fetch(`/Genre/GenreGraph?genre_id=${genreId}`)
-					.then(response => response.text())
-					.then(data => {
-						container.innerHTML = data; // Insert response into container
-						initializeChart(); // Call function to initialize Chart.js
-					})
-					.catch(error => {
-						container.innerHTML = "<p class='text-danger'>Error loading data.</p>";
-					});
+				}
 			});
 		});
+
+		document.querySelectorAll(".btn-mode-select").forEach(button => {
+			button.addEventListener("click", function () {
+				let selectedMode = parseInt(this.dataset.mode);
+
+				if (graphMode !== selectedMode) {
+					graphMode = selectedMode;
+
+					// Reset all buttons
+					document.querySelectorAll(".btn-mode-select").forEach(btn => {
+						btn.classList.remove("btn-primary");
+						btn.classList.add("btn-secondary");
+					});
+
+					// Highlight the selected button
+					this.classList.remove("btn-secondary");
+					this.classList.add("btn-primary");
+				}
+			});
+		});
+
+		// Year slider logic
+		var slider = document.getElementById("yearSlider");
+		noUiSlider.create(slider, {
+			start: [minimumYear, maximumYear],
+			connect: true,
+			range: { 'min': minimumYear, 'max': maximumYear },
+			step: 1
+		});
+
+		// Initial setup: Create the labels and place them on the handles
+		var minLabel = document.createElement("div");
+		minLabel.id = "minYearLabel";
+		minLabel.classList.add("slider-label"); // Add a class for styling
+		slider.querySelector('.noUi-handle-lower').appendChild(minLabel);
+
+		var maxLabel = document.createElement("div");
+		maxLabel.id = "maxYearLabel";
+		maxLabel.classList.add("slider-label"); // Add a class for styling
+		slider.querySelector('.noUi-handle-upper').appendChild(maxLabel);
+
+		// Initial call to set labels
+		updateHandleLabels();
+
+		slider.noUiSlider.on("set", function (values) {
+			minimumYear = Math.round(values[0]);
+			maximumYear = Math.round(values[1]);
+			updateHandleLabels();
+			updateChartYearRange(minimumYear, maximumYear);
+		});
+
+		// update labels when the slider is updated
+		slider.noUiSlider.on("update", function(values) {
+			minimumYear = Math.round(values[0]);
+			maximumYear = Math.round(values[1]);
+			updateHandleLabels();
+			updateChartYearRange(minimumYear, maximumYear);
+		});
+
+		// update the text labels on the handles to show selected years
+		function updateHandleLabels() {
+			var minYearLabel = document.getElementById("minYearLabel");
+			var maxYearLabel = document.getElementById("maxYearLabel");
+			var slider = document.getElementById("yearSlider");
+			if (minYearLabel && maxYearLabel) {
+				minYearLabel.textContent = minimumYear;  // Update text for the first handle
+				maxYearLabel.textContent = maximumYear;  // Update text for the second handle
+			}
+		}
+
 
 		function initializeChart() {
 			const chartElement = document.getElementById('genreChart');
 			if (!chartElement) return;
-			
+
 			var slider = document.getElementById("yearSlider");
 			let minYear = Math.round(slider.noUiSlider.get()[0]);
 			let maxYear = Math.round(slider.noUiSlider.get()[1]);
@@ -81,7 +191,7 @@
 			}
 
 			genreChart = new Chart(ctx, {
-				type: 'bar',
+				type: 'line',
 				data: {
 					labels: filteredLabels,
 					datasets: [{
@@ -108,26 +218,7 @@
 			});
 		}
 
-		// Year slider logic
-		var slider = document.getElementById("yearSlider");
-		noUiSlider.create(slider, {
-			start: [1910, 2025],
-			connect: true,
-			range: { 'min': 1910, 'max': 2025 },
-			step: 1
-		});
-
-		var selectedYears = document.getElementById("selectedYears");
-		slider.noUiSlider.on("update", function (values) {
-			var minYear = Math.round(values[0]);
-			var maxYear = Math.round(values[1]);
-			selectedYears.textContent = `${minYear} - ${maxYear}`;
-
-			// Filter chart data based on the selected year range
-			updateChart(minYear, maxYear);
-		});
-
-		function updateChart(minYear, maxYear) {
+		function updateChartYearRange(minYear, maxYear) {
 			if (!genreChart) return;
 
 			let filteredLabels = [];
@@ -140,11 +231,46 @@
 					filteredData.push(fullData[i]);
 				}
 			}
-
 			// Update chart with new data
 			genreChart.data.labels = filteredLabels;
 			genreChart.data.datasets[0].data = filteredData;
 			genreChart.update();
 		}
+
+		function addGenreToChart(genreId, data) {
+			if (!genreChart) return; // Ensure the chart exists
+
+			let parsedData = JSON.parse(data); // Assuming the response is JSON
+			let genreName = parsedData.genreName;
+			let genreData = parsedData.counts;
+			let years = parsedData.years;
+
+			// Check if genre is already in the chart
+			let existingIndex = genreChart.data.datasets.findIndex(dataset => dataset.label === genreName);
+
+			if (existingIndex !== -1) {
+				// Remove existing dataset
+				genreChart.data.datasets.splice(existingIndex, 1);
+			} else {
+				// Add new dataset
+				genreChart.data.datasets.push({
+					label: genreName,
+					data: genreData,
+					borderColor: getRandomColor(), // Function to get a random color
+					fill: false
+				});
+			}
+
+			// Update chart labels to match years if needed
+			genreChart.data.labels = years;
+			genreChart.update();
+		}
+
+		// Helper function to generate random colors
+		function getRandomColor() {
+			return `hsl(${Math.random() * 360}, 100%, 50%)`;
+		}
+
+
 	});
 </script>

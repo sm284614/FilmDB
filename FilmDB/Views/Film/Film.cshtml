@@ -5,7 +5,7 @@
 }
 <div class="container">
 	<div class="d-flex justify-content-between align-items-center">
-		<h1>Film List</h1>
+		<h1>Film Search and Filter</h1>
 		<form id="filmSearchForm" class="d-flex">
 			<input type="text" id="filmSearchQuery" class="form-control me-2" placeholder="Search by title" required />
 			<button type="submit" class="btn btn-primary">Search</button>
@@ -32,7 +32,21 @@
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
 		let selectedGenres = []; // Store selected genre IDs
+		let minimumYear = 1910;
+		let maximumYear = 2025;
 
+		document.getElementById("filmSearchForm").addEventListener("submit", function (event) {
+			event.preventDefault(); // Prevent full page reload
+			const query = document.getElementById("filmSearchQuery").value;
+			fetch(`/Film/FilmSearch?query=${encodeURIComponent(query)}`)
+				.then(response => response.text())
+				.then(data => {
+					document.getElementById("filmTableContainer").innerHTML = data;
+				})
+				.catch(error => console.error("Error loading films:", error));
+		});
+
+		//controls for genre buttons to requery
 		document.querySelectorAll(".genre-button").forEach(button => {
 			button.addEventListener("click", function () {
 				const genreId = parseInt(this.dataset.id);
@@ -71,74 +85,67 @@
 				.then(response => response.text())
 				.then(data => {
 					container.innerHTML = data;
+					filterFilmsByYear();
 				})
 				.catch(error => console.error("Error loading films:", error));
 		}
-
-		document.getElementById("filmSearchForm").addEventListener("submit", function (event) {
-			event.preventDefault(); // Prevent full page reload
-			const query = document.getElementById("filmSearchQuery").value;
-			fetch(`/Film/FilmSearch?query=${encodeURIComponent(query)}`)
-				.then(response => response.text())
-				.then(data => {
-					document.getElementById("filmTableContainer").innerHTML = data;
-				})
-				.catch(error => console.error("Error loading films:", error));
-		});
 
 		// Year slider logic
 		var slider = document.getElementById("yearSlider");
 		noUiSlider.create(slider, {
-			start: [1910, 2025],
+			start: [minimumYear, maximumYear],
 			connect: true,
-			range: { 'min': 1910, 'max': 2025 },
+			range: { 'min': minimumYear, 'max': maximumYear },
 			step: 1
 		});
 
-		// Function to update the text labels on the handles
-		function updateHandleLabels(values) {
-			var minYearLabel = document.getElementById("minYearLabel");
-			var maxYearLabel = document.getElementById("maxYearLabel");
+		// Initial setup: Create the labels and place them on the handles
+		var minLabel = document.createElement("div");
+		minLabel.id = "minYearLabel";
+		minLabel.classList.add("slider-label"); // Add a class for styling
+		slider.querySelector('.noUi-handle-lower').appendChild(minLabel);
 
-			if (minYearLabel && maxYearLabel) {
-				minYearLabel.textContent = Math.round(values[0]);  // Update text for the first handle
-				maxYearLabel.textContent = Math.round(values[1]);  // Update text for the second handle
-			}
-		}
+		var maxLabel = document.createElement("div");
+		maxLabel.id = "maxYearLabel";
+		maxLabel.classList.add("slider-label"); // Add a class for styling
+		slider.querySelector('.noUi-handle-upper').appendChild(maxLabel);
 
-		// Event listener to update labels when the slider is updated
-		slider.noUiSlider.on("update", function(values) {
+		// Initial call to set labels
+		updateHandleLabels(slider.noUiSlider.values);
+
+		slider.noUiSlider.on("set", function (values) {
+			minimumYear = Math.round(values[0]);
+			maximumYear = Math.round(values[1]);
+			filterFilmsByYear(values);
 			updateHandleLabels(values);
 		});
 
-		// Wait for the slider to be fully initialized before accessing the handles
-		slider.noUiSlider.on('start', function () {
-			// Initial setup: Create the labels and place them on the handles
-			var minLabel = document.createElement("div");
-			minLabel.id = "minYearLabel";
-			minLabel.classList.add("slider-label"); // Add a class for styling
-			slider.querySelector('.noUi-handle-lower').appendChild(minLabel);
-
-			var maxLabel = document.createElement("div");
-			maxLabel.id = "maxYearLabel";
-			maxLabel.classList.add("slider-label"); // Add a class for styling
-			slider.querySelector('.noUi-handle-upper').appendChild(maxLabel);
-
-			// Initial call to set labels
-			updateHandleLabels(slider.noUiSlider.values);
+		// update labels when the slider is updated
+		slider.noUiSlider.on("update", function(values) {
+			minimumYear = Math.round(values[0]);
+			maximumYear = Math.round(values[1]);
+			updateHandleLabels(values);
 		});
 
-		//var selectedYears = document.getElementById("selectedYears");
-		slider.noUiSlider.on("set", function (values) {
-			var minYear = Math.round(values[0]);
-			var maxYear = Math.round(values[1]);
-			//selectedYears.textContent = `${minYear} - ${maxYear}`;
+		// update the text labels on the handles to show selected years
+		function updateHandleLabels(values) {
+			var minYearLabel = document.getElementById("minYearLabel");
+			var maxYearLabel = document.getElementById("maxYearLabel");
+			var slider = document.getElementById("yearSlider");
+			if (minYearLabel && maxYearLabel) {
+				minYearLabel.textContent = minimumYear;  // Update text for the first handle
+				maxYearLabel.textContent = maximumYear;  // Update text for the second handle
+			}
+		}
+
+
+		function filterFilmsByYear(values){
 			// Filter films by selected year range
 			var rows = document.querySelectorAll("tr[data-year]");  // Get all rows with a data-year attribute
 			var visibleFilmCount = 0;
 			rows.forEach(function (row) {
 				var filmYear = parseInt(row.getAttribute("data-year"));
-				if (filmYear >= minYear && filmYear <= maxYear) {
+				if (filmYear >= minimumYear && filmYear <= maximumYear) {
 					row.style.display = "";  // Show the row
 					visibleFilmCount++;
 				} else {
@@ -147,14 +154,14 @@
 			});
 			// Update the film count in the span
 			var filmCountElement = document.getElementById("film-count");
-			if (minYear != maxYear)
+			if (minimumYear != maximumYear)
 			{
-				filmCountElement.textContent = `(${minYear} to ${maxYear}: ${visibleFilmCount} films)`;
+				filmCountElement.textContent = `${minimumYear} to ${maximumYear}: showing ${visibleFilmCount} films`;
 			}
 			else
 			{
-				filmCountElement.textContent = `(${minYear}: ${visibleFilmCount} films)`;
-			}			
-		});
+				filmCountElement.textContent = `${minimumYear}: showing ${visibleFilmCount} films`;
+			}
+		}
 	});
 </script>
