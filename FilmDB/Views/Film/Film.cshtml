@@ -10,7 +10,6 @@
 			<input type="text" id="filmSearchQuery" class="form-control me-2" placeholder="Search by title" required />
 			<button type="submit" class="btn btn-primary">Search</button>
 		</form>
-
 	</div>
 	@if (ViewBag.GenreList != null)
 	{
@@ -22,11 +21,14 @@
 				</a>
 			}
 		</div>
+		<div id="yearSlider" class="my-2 col-11"></div>
 	}
 	<div id="filmTableContainer" class="contentTable">
 		@await Html.PartialAsync("_FilmTable", (IEnumerable<Film>)Model)
 	</div>
 </div>
+<script src="/_framework/aspnetcore-browser-refresh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
 		let selectedGenres = []; // Store selected genre IDs
@@ -82,6 +84,77 @@
 					document.getElementById("filmTableContainer").innerHTML = data;
 				})
 				.catch(error => console.error("Error loading films:", error));
+		});
+
+		// Year slider logic
+		var slider = document.getElementById("yearSlider");
+		noUiSlider.create(slider, {
+			start: [1910, 2025],
+			connect: true,
+			range: { 'min': 1910, 'max': 2025 },
+			step: 1
+		});
+
+		// Function to update the text labels on the handles
+		function updateHandleLabels(values) {
+			var minYearLabel = document.getElementById("minYearLabel");
+			var maxYearLabel = document.getElementById("maxYearLabel");
+
+			if (minYearLabel && maxYearLabel) {
+				minYearLabel.textContent = Math.round(values[0]);  // Update text for the first handle
+				maxYearLabel.textContent = Math.round(values[1]);  // Update text for the second handle
+			}
+		}
+
+		// Event listener to update labels when the slider is updated
+		slider.noUiSlider.on("update", function(values) {
+			updateHandleLabels(values);
+		});
+
+		// Wait for the slider to be fully initialized before accessing the handles
+		slider.noUiSlider.on('start', function () {
+			// Initial setup: Create the labels and place them on the handles
+			var minLabel = document.createElement("div");
+			minLabel.id = "minYearLabel";
+			minLabel.classList.add("slider-label"); // Add a class for styling
+			slider.querySelector('.noUi-handle-lower').appendChild(minLabel);
+
+			var maxLabel = document.createElement("div");
+			maxLabel.id = "maxYearLabel";
+			maxLabel.classList.add("slider-label"); // Add a class for styling
+			slider.querySelector('.noUi-handle-upper').appendChild(maxLabel);
+
+			// Initial call to set labels
+			updateHandleLabels(slider.noUiSlider.values);
+		});
+
+		//var selectedYears = document.getElementById("selectedYears");
+		slider.noUiSlider.on("set", function (values) {
+			var minYear = Math.round(values[0]);
+			var maxYear = Math.round(values[1]);
+			//selectedYears.textContent = `${minYear} - ${maxYear}`;
+			// Filter films by selected year range
+			var rows = document.querySelectorAll("tr[data-year]");  // Get all rows with a data-year attribute
+			var visibleFilmCount = 0;
+			rows.forEach(function (row) {
+				var filmYear = parseInt(row.getAttribute("data-year"));
+				if (filmYear >= minYear && filmYear <= maxYear) {
+					row.style.display = "";  // Show the row
+					visibleFilmCount++;
+				} else {
+					row.style.display = "none";  // Hide the row
+				}
+			});
+			// Update the film count in the span
+			var filmCountElement = document.getElementById("film-count");
+			if (minYear != maxYear)
+			{
+				filmCountElement.textContent = `(${minYear} to ${maxYear}: ${visibleFilmCount} films)`;
+			}
+			else
+			{
+				filmCountElement.textContent = `(${minYear}: ${visibleFilmCount} films)`;
+			}			
 		});
 	});
 </script>

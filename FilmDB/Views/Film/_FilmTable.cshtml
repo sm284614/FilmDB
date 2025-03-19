@@ -7,7 +7,7 @@
 			@ViewBag.FilterDescription
 			@if (ViewBag.FilmCount != null)
 			{
-				<span class="fs-5">(@ViewBag.FilmCount films)</span>
+				<span id ="film-count" class="fs-5">(@ViewBag.FilmCount films)</span>
 			}
 		</h2>
 	}
@@ -27,7 +27,7 @@
 		<tbody>
 			@foreach (var film in Model)
 			{
-				<tr>
+				<tr data-year="@film.Year">
 					<td>
 						<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@film.FilmId">
 							@film.Title

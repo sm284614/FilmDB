@@ -75,6 +75,24 @@ body {
         background-color: #555;
     }
 
+/* Style the slider labels */
+.slider-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    font-size: 16px;
+    color: #333; /* Choose a color for the label */
+}
+
+#yearSlider {
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically (if needed) */
+    width: 95%; /* Make sure it spans the full width of its parent */
+    margin: 0 auto; /* Centers the element itself if its width is less than 100% */
+}
+
 /*! nouislider - 14.7.0 - 4/6/2021 */
 .noUi-target, .noUi-target * {
     -webkit-touch-callout: none;
@@ -166,10 +184,10 @@ body {
 }
 
     .noUi-horizontal .noUi-handle {
-        width: 34px;
+        width: 60px;
         height: 28px;
         right: -17px;
-        top: -6px
+        top: -6px;
     }
 
 .noUi-vertical {
@@ -200,7 +218,7 @@ body {
 }
 
 .noUi-connect {
-    background: #3FB8AF
+    background: #D3D3D3
 }
 
 .noUi-draggable {
@@ -214,9 +232,10 @@ body {
 .noUi-handle {
     border: 1px solid #D9D9D9;
     border-radius: 3px;
-    background: #FFF;
+    background: #EEE;
     cursor: default;
-    box-shadow: inset 0 0 1px #FFF,inset 0 1px 7px #EBEBEB,0 3px 6px -3px #BBB
+    box-shadow: none !important;
+/*    box-shadow: inset 0 0 1px #FFF,inset 0 1px 7px #EBEBEB,0 3px 6px -3px #BBB*/
 }
 
 .noUi-active {
@@ -224,18 +243,18 @@ body {
 }
 
 .noUi-handle:after, .noUi-handle:before {
-    content: "";
+/*    content: "";
     display: block;
     position: absolute;
     height: 14px;
     width: 1px;
     background: #E8E7E6;
     left: 14px;
-    top: 6px
+    top: 6px*/
 }
 
 .noUi-handle:after {
-    left: 17px
+    /*left: 17px*/
 }
 
 .noUi-vertical .noUi-handle:after, .noUi-vertical .noUi-handle:before {
@@ -258,13 +277,15 @@ body {
 }
 
 .noUi-pips, .noUi-pips * {
-    -moz-box-sizing: border-box;
-    box-sizing: border-box
+    display:none !important;
+/*    -moz-box-sizing: border-box;
+    box-sizing: border-box*/
 }
 
 .noUi-pips {
-    position: absolute;
-    color: #999
+    display: none !important;
+/*    position: absolute;
+    color: #999*/
 }
 
 .noUi-value {

@@ -1,7 +1,8 @@
 Film view:
-	* add year slider
-FilmCharacter
-	* add title to character search
+	* fix year slider
+		* display year labels on page load
+		* remove lines on sliders
+		* filter table on genre button press
 PersonFilmography
 	* remove duplicate film rows
 	* concat job titles

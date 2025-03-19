@@ -139,6 +139,7 @@ namespace FilmDB.Controllers
                 .Join(_db.Film_Person, fp1 => fp1.FilmId, fp2 => fp2.FilmId, (fp1, fp2) => new { fp1, fp2 }) // Find others who worked on those films
                 .Where(joined => joined.fp2.PersonId != id) // Exclude the given person
                 .Join(_db.Person, joined => joined.fp2.PersonId, p => p.PersonId, (joined, p) => new { joined, p }) // Get collaborator details
+                .DefaultIfEmpty()
                 .Join(_db.Job, joined => joined.joined.fp2.JobId, j => j.JobId, (joined, j) => new
                 {
                     Collaborator = joined.p,
@@ -146,6 +147,7 @@ namespace FilmDB.Controllers
                     FilmId = joined.joined.fp2.FilmId, // Include FilmId to count distinct films
                     Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
                 })
+                .DefaultIfEmpty()
                 .AsEnumerable()
                 .GroupBy(x => x.Collaborator.PersonId) // Group by collaborator (not job, since we're aggregating jobs)
                 .Select(group => new PersonJobCount
