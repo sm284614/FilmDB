@@ -290,7 +290,6 @@
 							const index = legendItem.datasetIndex;
 							const chart = legend.chart;
 							const meta = chart.getDatasetMeta(index);
-
 							meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
 							chart.update();
 						}
@@ -368,7 +367,6 @@
 						const index = elements[0].index;
 						const year = this.data.labels[index];
 						const genreName = this.data.datasets[0].label;
-
 						// For combined genres, navigate with the combined genre name
 						// The backend will need to handle this appropriately
 						window.location.href = `/Film/GenreYearDetail?genre=${encodeURIComponent(genreName)}&year=${year}`;

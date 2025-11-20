@@ -150,7 +150,6 @@ namespace FilmDB.Controllers
                 counts = counts
             });
         }
-
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreInfo(int genre_id)
         {
