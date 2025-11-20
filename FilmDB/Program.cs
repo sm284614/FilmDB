@@ -64,7 +64,7 @@ namespace FilmDB
             app.Use(async (context, next) =>
             {
                 context.Response.Headers.Append("Content-Security-Policy",
-                    "default-src 'self'; script-src 'self' https://filmdb20250207212520.azurewebsites.net https://cdn.jsdelivr.net/npm/chart.js https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js https://code.jquery.com  http://localhost aspnetcore-browser-refresh 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
+                    "default-src 'self'; script-src 'self' https://filmdb20250207212520.azurewebsites.net https://cdn.jsdelivr.net/npm/chart.js https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js https://code.jquery.com https://cdnjs.cloudflare.com http://localhost aspnetcore-browser-refresh 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
 
                 await next();
             });
