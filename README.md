@@ -1,4 +1,6 @@
-See the Azure-hosted version https://filmdb20250207212520.azurewebsites.net/
+See the Azure-hosted version (removed link due to AI bot traffic constatntly eating the data allowance)
+
+Lots of fun data explorations and visualisations for films, actors, genres etc.
 
 A simple ASP.NET web app (MVC) using SQL server for a film database. 
 
