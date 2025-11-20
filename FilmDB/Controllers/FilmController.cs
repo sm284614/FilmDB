@@ -2,25 +2,41 @@
 using FilmDB.Models;
 using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FilmDB.Controllers
 {
     public class FilmController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public FilmController(ApplicationDbContext db)
+        private readonly IMemoryCache _cache;
+        public FilmController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
+            _cache = cache;
         }
-        public IActionResult Film(int page = 1, int pageSize = 100)
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)] // http cache on client for a hour
+        public IActionResult Film()
         {
-            List<Film> filmList = _db.Film
-                .OrderBy(f => f.Year)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-            List<Genre> genreList = _db.Genre.ToList();
+            // Get featured films from server cache (or DB if not cached)
+            var filmList = _cache.GetOrCreate("FeaturedFilms", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
+                return _db.Film
+                    .OrderBy(f => f.Year)
+                    .ThenBy(f => f.Title)
+                    .Take(20)
+                    .ToList();
+            });
+            // Cache genre list too (used on every page load)
+            var genreList = _cache.GetOrCreate("GenreList", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
+                return _db.Genre.ToList();
+            });
             ViewBag.GenreList = genreList;
+            ViewBag.FilterDescription = "Featured Films";
+            ViewBag.FilmCount = filmList?.Count ?? 0;
             return View(filmList);
         }
         public IActionResult FilterFilmsByGenre(List<int> genreIds)
@@ -49,7 +65,6 @@ namespace FilmDB.Controllers
                 return PartialView("_FilmTable", new List<Film>());
             }
         }
-
         public IActionResult FilterFilmsByGenreBitwise(List<int> genreIds)
         {
             if (genreIds.Count > 0)
@@ -77,7 +92,6 @@ namespace FilmDB.Controllers
                 return PartialView("_FilmTable", new List<Film>());
             }
         }
-
         public IActionResult FilmSearch(string query)
         {
             var films = _db.Film
@@ -104,7 +118,7 @@ namespace FilmDB.Controllers
             ViewBag.FilterDescription = $"{genre} films from {year}";
             ViewBag.FilmCount = films.Count;
             // Pass data to the view
-            return View("Film", films);
+            return View("FilmList", films);
         }
         public IActionResult GenreYearRangeDetail(string genre, int startYear, int endYear)
         {
@@ -202,7 +216,7 @@ namespace FilmDB.Controllers
             ViewBag.FilterDescription = $"Films from {year}";
             ViewBag.FilmCount = films.Count();
             // Pass data to the view
-            return View("Film", films);
+            return View("FilmList", films);
         }
     }
 }

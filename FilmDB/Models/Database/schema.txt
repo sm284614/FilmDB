@@ -1,0 +1,109 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace FilmDB.Models.Database
+{
+    public class Character
+    {
+        [Key]
+        [Column("character_id")]
+        public int CharacterId { get; set; }
+        [Column("name")]
+        public string Name { get; set; } = "";
+    }
+
+    public class Film
+    {
+        [Key]
+        [Column("film_id")]
+        public string FilmId { get; set; } = "";
+        [Column("title")]
+        public string Title { get; set; } = "";
+        [Column("year")]
+        public short Year { get; set; }
+        [Column("run_time_minutes")]
+        public short RunTimeMinutes { get; set; }
+        [Column("genre_bit_field")]
+        public int GenreBitField { get; set; }
+    }
+
+    public class FilmGenre
+    {
+        [Key]
+        [Column("film_genre_id")]
+        public int FilmGenreId { get; set; } 
+        [Column("film_id")]
+        public string FilmId { get; set; } = "";
+        [Column("genre_id")]
+        public int GenreId { get; set; }
+    }
+
+    public class FilmPerson
+    {
+        [Column("film_id")]
+        public string FilmId { get; set; } = "";
+        [Column("person_id")]
+        public string PersonId { get; set; } = "";
+        [Column("job_id")]
+        public byte JobId { get; set; }
+    }
+
+    public class FilmPersonCharacter
+    {
+        [Column("film_id")]
+        public string FilmId { get; set; } = "";
+        [Column("person_id")]
+        public string PersonId { get; set; } = "";
+        [Column("character_id")]
+        public int CharacterId { get; set; }
+    }
+
+    public class Genre
+    {
+        [Key]
+        [Column("genre_id")]
+        public int GenreId { get; set; }
+        [Column("name")]
+        public string Name { get; set; } = "";
+    }
+
+    public class Job
+    {
+        [Key]
+        [Column("job_id")]
+        public byte JobId { get; set; }
+        [Column("title")]
+        public string Title { get; set; } = "";
+    }
+
+    public class Person
+    {
+        [Key]
+        [Column("person_id")]
+        public string PersonId { get; set; } = "";
+        [Column("name")]
+        public string Name { get; set; } = "";
+        [Column("birth_year")]
+        public short? BirthYear { get; set; }
+        [Column("death_year")]
+        public short? DeathYear { get; set; }
+        [Column("first_film_id")]
+        public string FirstFilmId { get; set; } = "";
+    }
+
+    public class PersonJobSummary
+    {
+        [Key]
+        [Column("person_id")]
+        public Person Person { get; set; } = null;
+        [Key]
+        [Column("job_id")]
+        public int JobId { get; set; }
+        [Column("job_count")]
+        public int JobCount { get; set; }
+        [Column("earliest_year")]
+        public short EarliestYear { get; set; }
+        [Column("latest_year")]
+        public short LatestYear { get; set; }
+    }
+}

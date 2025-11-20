@@ -1,0 +1,51 @@
+FilmDB web app description
+
+An ASP.NET Core MVC project (.NET 9)
+
+The site has 5 controllers:
+Films, Person, Character, Job, Genre
+
+There are several views:
+Film: 
+Box to search film by title (any partial match)
+Grid of genre buttons at top to select genres.
+double-ended-silder control to select start/end year
+Lists film of a given combination of genres released within a window of years (title, year, runtime, web link)
+rows have link on title (to film info), and year (to list of all films from this film's year)
+
+FilmDetail:
+Detail on a single film with title, year, genres, plus list of cast (name and character) and crew (name and role)
+all names and characters link to name and character pages
+
+Person:
+Search box for person by name (and partial match)
+List of matching film cast/crew (name, debut film, film credits, life (birth year - death year)
+rows have link on name (to person info), and debut film
+
+Personfilmography
+Name, list of films (title, year, role)
+
+Collaberation:
+Name, list of people they've worked on a film with, number of collaberations
+
+TwoPersonCollaberation:
+title with two people names
+list of (tilm title, year, person#1 role, person#2)
+
+Character:
+box to search by character name (any partial match)
+List of chracters (name, credits)
+rows have link on name (to list of films featuring this character (film, actor, year)
+
+Job:
+grid of role buttons at top to select role (e.g. actor, director)
+On selection: Top 100 people with most credits for that role (person, number of films, life, years active)
+rows have link on person name to person details page
+
+Genre:
+pair of buttons for 'compare' and 'combine'
+Grid of genre buttons at top to select genres.
+double-ended-silder control to select start/end year
+(line) graph that shows number of films in selected genres released in given years
+when COMPARE button has been pressed: each selected genre is plotted as a separate line on the graph (e.g. line for "action", line for "sci-fo")
+when COMBINE button has been pressed: one line is plotted on the for films that comtain all selected genres (e.g. one line for number of "sci-fi action" films)

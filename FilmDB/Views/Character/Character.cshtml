@@ -1,31 +1,76 @@
-﻿@using FilmDB.Models.Database
-@model IEnumerable<Character>
-<div class="container">
-	<div class="d-flex justify-content-between align-items-center">
-		<h1>Film Characters</h1>
-		<form id="characterSearchForm" class="d-flex">
-			<input type="text" id="characterSearchQuery" name="characterSearchQuery" class="form-control me-2" placeholder="Search Characters" required />
-			<button type="submit" class="btn btn-primary">Search</button>
-		</form>
-	</div>
-	<div id="characterTableContainer" class="contentTable">
-</div>
+﻿@using FilmDB.Models
+@model IEnumerable<CharacterCount>
 @{
-	ViewData["Title"] = "Film Characters";
+    ViewData["Title"] = "Film Characters";
 }
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Film Characters</h1>
+        <form id="characterSearchForm" class="d-flex">
+            <input type="text" id="characterSearchQuery" name="characterSearchQuery" class="form-control me-2" placeholder="Search Characters" required />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="mt-4">
+            <h3>Popular Characters</h3>
+            <p class="text-muted">Popular film characters</p>
+            <div class="row g-2">
+                @foreach (var cc in Model)
+                {
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                        <a asp-controller="Character" asp-action="CharacterDetail" asp-route-characterId="@cc.Character.CharacterId"
+                           class="card h-100 text-decoration-none character-card">
+                            <div class="card-body p-2 text-center">
+                                <h6 class="card-title mb-1 small">@cc.Character.Name</h6>
+                                <span class="badge bg-secondary">@cc.Count films</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div id="characterTableContainer" class="contentTable mt-4">
+        <!-- Search results will appear here -->
+    </div>
+</div>
+
+<style>
+    .character-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #dee2e6;
+    }
+
+        .character-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-color: #0d6efd;
+        }
+
+        .character-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+</style>
 
 <script>
-	document.addEventListener("DOMContentLoaded", function () {
-		document.getElementById("characterSearchForm").addEventListener("submit", function (event) {
-			event.preventDefault(); // Prevent full page reload
-			document.getElementById("characterTableContainer").innerHTML = "Loading data...";
-			const query = document.getElementById("characterSearchQuery").value;
-			fetch(`/Character/CharacterSearch?query=${encodeURIComponent(query)}`)
-				.then(response => response.text())
-				.then(data => {
-					document.getElementById("characterTableContainer").innerHTML = data;
-				})
-				.catch(error => console.error("Error loading characters:", error));
-		});
-	});
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("characterSearchForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            document.getElementById("characterTableContainer").innerHTML = "<p>Loading data...</p>";
+            const query = document.getElementById("characterSearchQuery").value;
+            fetch(`/Character/CharacterSearch?query=${encodeURIComponent(query)}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("characterTableContainer").innerHTML = data;
+                })
+                .catch(error => console.error("Error loading characters:", error));
+        });
+    });
 </script>

@@ -16,16 +16,6 @@
 		</a>
 	</p>
 
-	<!-- Job Filter Buttons -->
-	<div class="d-flex align-items-center">
-		<button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Reset Filter -->
-		@foreach (var jobTitle in Model.Crew.Select(pj => pj.JobTitle).Distinct())
-		{
-			<button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
-				@jobTitle
-			</button>
-		}
-	</div>
 	<div class="table-responsive contentTable">
 		<h3>Cast</h3>
 		<table class="table">
@@ -55,6 +45,16 @@
 		</table>
 
 		<h3>Crew</h3>
+		<!-- Job Filter Buttons -->
+		<div class="d-flex align-items-center">
+			<button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Reset Filter -->
+			@foreach (var jobTitle in Model.Crew.Select(pj => pj.JobTitle).Distinct())
+			{
+				<button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
+					@jobTitle
+				</button>
+			}
+		</div>
 		<table class="table">
 			<thead>
 				<tr>

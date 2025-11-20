@@ -1,0 +1,18 @@
+﻿@using FilmDB.Models.Database
+@model IEnumerable<Film>
+@{
+	ViewData["Title"] = "Films";
+}
+<div class="container">
+	<div class="d-flex justify-content-between align-items-center">
+		<h1>Film Search and Filter</h1>
+		<form id="filmSearchForm" class="d-flex">
+			<input type="text" id="filmSearchQuery" class="form-control me-2" placeholder="Search by title" required />
+			<button type="submit" class="btn btn-primary">Search</button>
+		</form>
+	</div>
+	<div id="filmTableContainer" class="contentTable">
+		@await Html.PartialAsync("_FilmTable", (IEnumerable<Film>)Model)
+	</div>
+</div>
+<script src="/_framework/aspnetcore-browser-refresh.js"></script>
