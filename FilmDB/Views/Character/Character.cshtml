@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Film Characters";
 }
-<div class="container">
+<div class="container" style="border-width:1px; border-color:black">
     <div class="d-flex justify-content-between align-items-center">
         <h1>Film Characters</h1>
         <form id="characterSearchForm" class="d-flex">
@@ -51,5 +51,17 @@
     
     #characterTableContainer:empty {
         display: none;
+    }
+
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #characterTableContainer {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
     }
 </style>

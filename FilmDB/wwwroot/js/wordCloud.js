@@ -94,8 +94,17 @@ window.addEventListener('load', function ()
                 gridSize: Math.round(8 * dpr),  // Scale grid size for DPR
                 weightFactor: function (size)
                 {
-                    // Scale font size based on count and display size
-                    return Math.pow(size, 0.7) * 8;
+                    // Adaptive scaling: find max size in dataset
+                    const maxSize = Math.max(...wordCloudData.map(item => item[1]));
+                    const minSize = Math.min(...wordCloudData.map(item => item[1]));
+
+                    // Normalize size to 0-1 range, then scale appropriately
+                    const normalized = (size - minSize) / (maxSize - minSize);
+
+                    // Map to font size range (e.g., 12px to 60px)
+                    const minFontSize = 16;
+                    const maxFontSize = 96;
+                    return minFontSize + (normalized * (maxFontSize - minFontSize));
                 },
                 fontFamily: 'Arial, sans-serif',
                 color: function (word, weight)
@@ -157,7 +166,13 @@ window.addEventListener('load', function ()
                         gridSize: Math.round(8 * dpr),
                         weightFactor: function (size)
                         {
-                            return Math.pow(size, 0.7) * 8;
+                            // Adaptive scaling
+                            const maxSize = Math.max(...wordCloudData.map(item => item[1]));
+                            const minSize = Math.min(...wordCloudData.map(item => item[1]));
+                            const normalized = (size - minSize) / (maxSize - minSize);
+                            const minFontSize = 12;
+                            const maxFontSize = 60;
+                            return minFontSize + (normalized * (maxFontSize - minFontSize));
                         },
                         fontFamily: 'Arial, sans-serif',
                         color: function (word, weight)

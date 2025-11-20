@@ -20,6 +20,12 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public IActionResult Character()
         {
+            var popularCharacters = CuratedCharacters();
+            //var popularCharacters = FrequentCharacters(40);
+            return View(popularCharacters);
+        }
+        public List<CharacterCount>? CuratedCharacters()
+        {
             // Curated list of iconic character IDs
             // TODO: Add your actual character IDs here
             var popularCharacterIds = new[]
@@ -86,9 +92,9 @@ namespace FilmDB.Controllers
                     .Where(c => c != null)
                     .ToList();
             });
-            return View(popularCharacters);
+            return popularCharacters;
         }
-        public IActionResult CharacterCloud()
+        public List<CharacterCount>? FrequentCharacters(int quantity)
         {
             var characters = _db.Character
                 .Select(c => new CharacterCount
@@ -96,11 +102,12 @@ namespace FilmDB.Controllers
                     Character = c,
                     Count = _db.Film_Person_Character.Count(fpc => fpc.CharacterId == c.CharacterId)
                 })
+                //.Where(cc => cc.Count < 50)
                 .OrderByDescending(cc => cc.Count)
-                .Take(100)
+                .Take(quantity)
                 .ToList();
 
-            return View(characters);
+            return characters;
         }
         public IActionResult CharacterSearch(string query)
         {
