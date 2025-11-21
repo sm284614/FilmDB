@@ -2,97 +2,101 @@
 @{
 	ViewData["Title"] = @Model.Film.Title;
 }
-
-<div class="container">
-	<h1>@Model.Film.Title</h1>
-	<p>
-		<strong>Year:</strong> @Model.Film.Year &nbsp;
-		<strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))
-		@{
-			string query = $"https://www.google.com/search?q={Uri.EscapeDataString(Model.Film.Title)},+{Model.Film.Year}";
-		}
-		<a href="@query" target="_blank" rel="noopener noreferrer">
-			<img src="/image/box-arrow-up-right.svg" alt="Search for @Model.Film.Title" />
-		</a>
-	</p>
-
-	<div class="table-responsive contentTable">
-		<h3>Cast</h3>
-		<table class="table">
-			<thead>
-				<tr>
-					<th class="w-50">Role</th>
-					<th class="w-50">Name</th>
-				</tr>
-			</thead>
-			<tbody>
-				@foreach (PersonJob personJob in Model.Cast)
-				{
-					<tr job="@personJob.JobTitle">
-						<td>
-							<a asp-controller="Character" asp-action="CharacterDetail" asp-route-characterId="@personJob.CharacterId">
-								@personJob.JobTitle
-							</a>
-						</td>
-						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
-								@personJob.PersonName
-							</a>
-						</td>
-					</tr>
+<div class="container m-4">
+	<div class="card p-3">
+		<div class="card-body">
+			<div class="d-flex justify-content-between align-items-center">
+				<h1 class="card-title">@Model.Film.Title</h1>
+				@{
+					string query = $"https://www.google.com/search?q={Uri.EscapeDataString(Model.Film.Title)},+{Model.Film.Year}";
 				}
-			</tbody>
-		</table>
-
-		<h3>Crew</h3>
-		<!-- Job Filter Buttons -->
-		<div class="d-flex align-items-center">
-			<button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Reset Filter -->
-			@foreach (var jobTitle in Model.Crew.Select(pj => pj.JobTitle).Distinct())
-			{
-				<button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
-					@jobTitle
-				</button>
-			}
+				<a href="@query" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+					<img src="/image/box-arrow-up-right.svg" alt="Search" style="width: 16px; height: 16px;" />
+					Search Online
+				</a>
+			</div>
+			<div class="card-text">
+				<p class="mb-2">
+					<strong>Year:</strong> @Model.Film.Year &nbsp;&nbsp;
+					<strong>Runtime:</strong> @Model.Film.RunTimeMinutes minutes
+				</p>
+				<p class="mb-2">
+					<strong>Genres:</strong> @string.Join(", ", Model.Genres.Select(g => g.Name))
+				</p>
+			</div>
 		</div>
-		<table class="table">
-			<thead>
-				<tr>
-					<th class="w-50">Job Title</th>
-					<th class="w-50">Name</th>
-				</tr>
-			</thead>
-			<tbody id="filmTableBody">
-				@foreach (PersonJob personJob in Model.Crew)
-				{
-					<tr class="film-row" data-job="@personJob.JobTitle">
-						<td>@personJob.JobTitle</td>
-						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
-								@personJob.PersonName
-							</a>
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
+
+
+		<div class="row mt-4">
+			<div class="col-12 col-md-6 mb-3 mb-md-0">
+				<div class="card h-100">
+					<div class="card-header">
+						<h3 class="mb-0">Cast</h3>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0">
+								<thead>
+									<tr>
+										<th class="w-50">Role</th>
+										<th class="w-50">Name</th>
+									</tr>
+								</thead>
+								<tbody>
+									@foreach (PersonJob personJob in Model.Cast)
+									{
+										<tr>
+											<td>
+												<a asp-controller="Character" asp-action="CharacterDetail" asp-route-characterId="@personJob.CharacterId">
+													@personJob.JobTitle
+												</a>
+											</td>
+											<td>
+												<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
+													@personJob.PersonName
+												</a>
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12 col-md-6">
+				<div class="card h-100">
+					<div class="card-header">
+						<h3 class="mb-0">Crew</h3>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0">
+								<thead>
+									<tr>
+										<th class="w-50">Job Title</th>
+										<th class="w-50">Name</th>
+									</tr>
+								</thead>
+								<tbody>
+									@foreach (PersonJob personJob in Model.Crew)
+									{
+										<tr>
+											<td>@personJob.JobTitle</td>
+											<td>
+												<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.PersonId">
+													@personJob.PersonName
+												</a>
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
-
-<!-- JavaScript for Filtering -->
-<script>
-	function filterTable(jobTitle) {
-		const rows = document.querySelectorAll('.film-row');
-
-		rows.forEach(row => {
-			if (jobTitle === 'all' || row.getAttribute('data-job') === jobTitle)
-			{
-				row.style.display = ''; // Show row
-			}
-			else
-			{
-				row.style.display = 'none'; // Hide row
-			}
-		});
-	}
-</script>

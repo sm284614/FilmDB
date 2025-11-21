@@ -135,13 +135,16 @@
 		});
 		// Update the film count in the span
 		var filmCountElement = document.getElementById("film-count");
-		if (minimumYear != maximumYear)
+		if (filmCountElement != null)
 		{
-			filmCountElement.textContent = `${minimumYear} to ${maximumYear}: showing ${visibleFilmCount} films`;
-		}
-		else
-		{
-			filmCountElement.textContent = `${minimumYear}: showing ${visibleFilmCount} films`;
+			if (minimumYear != maximumYear)
+			{
+				filmCountElement.textContent = `${minimumYear} to ${maximumYear}: showing ${visibleFilmCount} films`;
+			}
+			else
+			{
+				filmCountElement.textContent = `${minimumYear}: showing ${visibleFilmCount} films`;
+			}
 		}
 	}
 });
