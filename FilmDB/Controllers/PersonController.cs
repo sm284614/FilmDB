@@ -22,7 +22,7 @@ namespace FilmDB.Controllers
                 .Select(p => new PersonFilm
                 {
                     Person = p,
-                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId),
+                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId) ?? new Film(),
                     Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
                 })                
                 .Take(100) // Limit to some results
@@ -40,7 +40,7 @@ namespace FilmDB.Controllers
                 .Select(p => new PersonFilm
                 {
                     Person = p,
-                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId), // Get the first film
+                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId) ?? new Film(), // Get the first film
                     Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
                 })
                 .OrderByDescending(pf => pf.Count) // Sort by person name
@@ -127,7 +127,7 @@ namespace FilmDB.Controllers
             var jobPersonJobCount = new JobCount
             {
                 Job = job,
-                PersonJobSummary = personJobCounts
+                PersonJobSummary = personJobCounts ?? new List<PersonJobSummary>()
             };
 
             return PartialView("_JobCount", jobPersonJobCount);
@@ -140,23 +140,23 @@ namespace FilmDB.Controllers
                 .Where(joined => joined.fp2.PersonId != id) // Exclude the given person
                 .Join(_db.Person, joined => joined.fp2.PersonId, p => p.PersonId, (joined, p) => new { joined, p }) // Get collaborator details
                 .DefaultIfEmpty()
-                .Join(_db.Job, joined => joined.joined.fp2.JobId, j => j.JobId, (joined, j) => new
+                .Join(_db.Job, joined => joined!.joined.fp2.JobId, j => j.JobId, (joined, j) => new //'joined' on this line is possible null
                 {
-                    Collaborator = joined.p,
+                    Collaborator = joined!.p, //'joined' on this line is possible null
                     Job = j,
                     FilmId = joined.joined.fp2.FilmId, // Include FilmId to count distinct films
                     Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
                 })
                 .DefaultIfEmpty()
                 .AsEnumerable()
-                .GroupBy(x => x.Collaborator.PersonId) // Group by collaborator (not job, since we're aggregating jobs)
+                .GroupBy(x => x!.Collaborator.PersonId) // Group by collaborator (not job, since we're aggregating jobs)
                 .Select(group => new PersonJobCount
                 {
-                    Person = group.First().Collaborator,
-                    Job = new Job { Title = string.Join(", ", group.Select(x => x.Job.Title).Distinct()) }, // Combine all jobs into a single string
-                    JobCount = group.Select(x => x.FilmId).Distinct().Count(), // Count unique films instead of job entries
-                    EarliestYear = group.Min(x => x.Year),
-                    LatestYear = group.Max(x => x.Year)
+                    Person = group.First()!.Collaborator, //'group' on this line is possible null
+                    Job = new Job { Title = string.Join(", ", group.Select(x => x!.Job.Title).Distinct()) }, // Combine all jobs into a single string //'x' on this (and subsequent) line is possible null
+                    JobCount = group.Select(x => x!.FilmId).Distinct().Count(), // Count unique films instead of job entries
+                    EarliestYear = group.Min(x => x!.Year),
+                    LatestYear = group.Max(x => x!.Year)
                 })
                 .OrderByDescending(pjc => pjc.JobCount)
                 .ToList();
@@ -165,7 +165,7 @@ namespace FilmDB.Controllers
             // Create a collaboration model
             var collaborationModel = new Collaboration
             {
-                Person = _db.Person.FirstOrDefault(p => p.PersonId == id), // Get the main person's details
+                Person = _db.Person.FirstOrDefault(p => p.PersonId == id) ?? new Person(), // Get the main person's details
                 CollaborationList = collaborations
             };
 

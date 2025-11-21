@@ -7,7 +7,7 @@ namespace FilmDB.Models.Database
     {
         [Key]
         [Column("person_id")]
-        public Person Person { get; set; } = null;
+        public Person? Person { get; set; }
         [Key]
         [Column("job_id")]
         public int JobId { get; set; }

@@ -6,5 +6,10 @@ namespace FilmDB.Models
     {
         public Person Person { get; set; }
         public List<PersonJobCount> CollaborationList { get; set; }
+        public Collaboration()
+        {
+            Person = new Person();
+            CollaborationList = new List<PersonJobCount>();
+        }
     }
 }

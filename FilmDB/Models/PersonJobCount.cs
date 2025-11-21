@@ -9,5 +9,10 @@ namespace FilmDB.Models
         public int JobCount { get; set; }
         public short EarliestYear { get; set; }
         public short LatestYear { get; set; }
+        public PersonJobCount()
+        {
+            Person = new Person();
+            Job = new Job();
+        }
     }
 }

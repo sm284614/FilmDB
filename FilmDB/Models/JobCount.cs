@@ -6,5 +6,10 @@ namespace FilmDB.Models
     {
         public Job Job { get; set; }
         public List<PersonJobSummary> PersonJobSummary { get; set; }
+        public JobCount()
+        {
+            Job = new Job();
+            PersonJobSummary = new List<PersonJobSummary>();
+        }
     }
 }

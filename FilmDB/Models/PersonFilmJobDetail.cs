@@ -2,9 +2,9 @@
 {
     public class PersonFilmJobDetail
     {
-        public string FilmId { get; set; }
-        public string FilmTitle { get; set; }
-        public short FilmYear { get; set; }
-        public string JobTitle { get; set; }
+        public string FilmId { get; set; } = "-1";
+        public string FilmTitle { get; set; } = "unknown";
+        public short FilmYear { get; set; } = 1900;
+        public string JobTitle { get; set; } = "unknown";
     }
 }

@@ -7,14 +7,15 @@ namespace FilmDB.Models.Database
     {
         [Key]
         [Column("film_id")]
-        public string FilmId { get; set; } = "";
+        public string FilmId { get; set; } = "unknown";
         [Column("title")]
-        public string Title { get; set; } = "";
+        public string Title { get; set; } = "unknown";
         [Column("year")]
         public short Year { get; set; }
         [Column("run_time_minutes")]
         public short RunTimeMinutes { get; set; }
         [Column("genre_bit_field")]
         public int GenreBitField { get; set; }
+
     }
 }
