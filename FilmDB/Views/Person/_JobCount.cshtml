@@ -21,8 +21,8 @@
 				{
 					<tr>
 						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.Person.PersonId">
-								@personJob.Person.Name
+							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personJob.Person!.PersonId">
+								@personJob.Person!.Name
 							</a>
 						</td>
 						<td>@personJob.JobCount</td>

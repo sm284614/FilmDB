@@ -4,8 +4,8 @@ namespace FilmDB.Models
 {
     public class PersonFilm
     {
-        public Person Person { get; set; }
-        public Film Film { get; set; }
+        public Person? Person { get; set; }
+        public Film? Film { get; set; }
         public int Count { get; set; } = 0;
     }
 }

@@ -139,7 +139,7 @@ namespace FilmDB.Controllers
                     Film = f.film,
                     Person = person
                 })
-                .OrderByDescending(fp => fp.Film.Year)
+                .OrderByDescending(fp => fp.Film!.Year)
                 .ToList();
             ViewBag.CharacterName = character.Name;
             return View(personFilms);
