@@ -2,6 +2,7 @@
 using FilmDB.Models;
 using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace FilmDB.Controllers
@@ -23,6 +24,7 @@ namespace FilmDB.Controllers
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
                 return _db.Film
+                    .AsNoTracking()
                     .OrderBy(f => f.Year)
                     .ThenBy(f => f.Title)
                     .Take(20)
@@ -44,12 +46,14 @@ namespace FilmDB.Controllers
             if (genreIds.Count > 0)
             {
                 var films = _db.Film
+                    .AsNoTracking()
                     .Where(f => genreIds.All(gid =>
                         _db.Film_Genre.Any(fg => fg.FilmId == f.FilmId && fg.GenreId == gid)
                     ))
                     .OrderByDescending(f => f.Year)
                     .ToList();
                 var genreNames = _db.Genre
+                    .AsNoTracking()
                     .Where(g => genreIds.Contains(g.GenreId))
                     .OrderBy(g => g.Name)
                     .Select(g => g.Name) // Select only the names
@@ -73,6 +77,7 @@ namespace FilmDB.Controllers
                 // Calculate the bitmask for the selected genres
                 int bitField = genreIds.Sum();
                 var films = _db.Film
+                    .AsNoTracking()
                     .Where(f => (f.GenreBitField & bitField) == bitField)
                     .OrderByDescending(f => f.Year)
                     .ToList();
@@ -95,6 +100,7 @@ namespace FilmDB.Controllers
         public IActionResult FilmSearch(string query)
         {
             var films = _db.Film
+                .AsNoTracking()
             .Where(f => f.Title.Contains(query))
             .OrderByDescending(f => f.Year)
             .ThenBy(f => f.Title) // Then order by title (ascending)
@@ -150,6 +156,7 @@ namespace FilmDB.Controllers
 
             // Query the genres related to the film
             var genres = _db.Genre
+                .AsNoTracking()
                 .Join(_db.Film_Genre, g => g.GenreId, fg => fg.GenreId, (g, fg) => new { g, fg }) // Join Genre and Film_Genre
                 .Where(joined => joined.fg.FilmId.ToString() == id) // Filter by the FilmId (id)
                 .Select(joined => joined.g) // Select the Genre object from the joined result
@@ -157,7 +164,8 @@ namespace FilmDB.Controllers
 
             // Query actors (JobTitle = "Actor" or "Self") and set JobTitle to the Character Name
             var cast = _db.Film_Person
-                .Where(fp => fp.FilmId.ToString() == id)
+                .AsNoTracking()
+                .Where(fp => fp.FilmId == id)
                 .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
                 .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new { joined.fp, joined.p, j }) // Join with Job
                 .Where(joined => joined.j.Title == "Actor" || joined.j.Title == "Self") // Only actors
@@ -183,6 +191,7 @@ namespace FilmDB.Controllers
 
             // Query the crew involved in the film and their jobs
             var crew = _db.Film_Person
+                 .AsNoTracking()
                  .Where(fp => fp.FilmId.ToString() == id)
                  .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
                  .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new PersonJob
@@ -204,12 +213,14 @@ namespace FilmDB.Controllers
                 Crew = crew
             };
 
+
             return View(filmDetail);
         }
         public IActionResult FilmYear(int year)
         {
             // Fetch data for the specific genre and year
             var films = _db.Film
+                .AsNoTracking()
                 .Where(f => f.Year == year)  // Filter films by the year
                 .OrderByDescending(fy => fy.Year)  // Order by year
                 .ToList();

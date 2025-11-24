@@ -83,7 +83,7 @@ namespace FilmDB.Controllers
 
             return View(model);
         }
-        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Job()
         {
             List<Job> jobList = _db.Job.ToList();
@@ -132,6 +132,7 @@ namespace FilmDB.Controllers
 
             return PartialView("_JobCount", jobPersonJobCount);
         }
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult Collaboration(string id)
         {
             var collaborations = _db.Film_Person
@@ -171,6 +172,7 @@ namespace FilmDB.Controllers
 
             return View(collaborationModel);
         }
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult TwoPersonCollaboration(string id1, string id2)
         {
             var sharedFilms = (from fp1 in _db.Film_Person
