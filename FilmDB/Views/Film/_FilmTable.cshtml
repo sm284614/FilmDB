@@ -43,7 +43,7 @@
 					<td>@film.RunTimeMinutes minutes</td>
 					<td class="text-center">
 						@{
-							string query = $"https://www.google.com/search?q={Uri.EscapeDataString(film.Title)},+{film.Year}";
+							string query = $"https://www.duckduckgo.com/search?q={Uri.EscapeDataString(film.Title)},+{film.Year}";
 						}
 						<a href="@query" target="_blank" rel="noopener noreferrer">
 							<img src="/image/box-arrow-up-right.svg" alt="Search for @film.Title" />

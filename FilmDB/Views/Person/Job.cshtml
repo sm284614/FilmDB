@@ -6,9 +6,6 @@
 	<div class="col-12 mx-auto">
 		@foreach (var job in Model)
 		{
-@* 			<a asp-controller="Person" asp-action="JobCount" asp-route-id="@job.JobId" class="btn btn-secondary w-16 m-x">
-				@job.Title
-			</a> *@
 			<a data-id="@job.JobId" class="btn job-button btn-secondary w-16 m-x">
 				@job.Title
 			</a>

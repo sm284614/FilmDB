@@ -23,9 +23,9 @@ namespace FilmDB.Controllers
         public IActionResult GenreGraph(int genre_id)
         {
             var genre = _db.Genre
+                .AsNoTracking() 
                 .Where(g => g.GenreId == genre_id)
                 .FirstOrDefault();
-
             if (genre == null)
             {
                 return NotFound();
@@ -33,8 +33,10 @@ namespace FilmDB.Controllers
             int genreBitValue = genre_id;
             var genreData = new GenreFilmYearCount
             {
+                GenreId = genre_id, 
                 Name = genre.Name,
                 FilmYears = _db.Film
+                    .AsNoTracking()
                     .Where(f => (f.GenreBitField & genreBitValue) == genreBitValue)
                     .GroupBy(f => f.Year)
                     .Select(group => new FilmYearCount
@@ -47,11 +49,11 @@ namespace FilmDB.Controllers
             };
             return PartialView("_GenreGraph", genreData);
         }
-
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreGraphData(int genre_id)
         {
             var genre = _db.Genre
+                .AsNoTracking()
                 .Where(g => g.GenreId == genre_id)
                 .FirstOrDefault();
 
@@ -60,13 +62,14 @@ namespace FilmDB.Controllers
                 return NotFound();
             }
 
-            // Use GenreBitField for faster queries
             int genreBitValue = genre_id;
 
             var genreData = new GenreFilmYearCount
             {
+                GenreId = genre_id,
                 Name = genre.Name,
                 FilmYears = _db.Film
+                    .AsNoTracking()
                     .Where(f => (f.GenreBitField & genreBitValue) == genreBitValue)
                     .GroupBy(f => f.Year)
                     .Select(group => new FilmYearCount
@@ -77,8 +80,10 @@ namespace FilmDB.Controllers
                     .OrderBy(x => x.Year)
                     .ToList()
             };
+
             return Json(new
             {
+                genreId = genre_id,
                 genreName = genre.Name,
                 years = genreData.FilmYears.Select(y => y.Year).ToArray(),
                 counts = genreData.FilmYears.Select(y => y.FilmCount).ToArray()
@@ -180,67 +185,6 @@ namespace FilmDB.Controllers
             }
 
             return View(genreData);
-        }
-
-        // Handles both single genres (e.g., "Action") and combined genres (e.g., "Action + Sci-Fi")
-        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
-        public async Task<IActionResult> GenreYearDetail(string genre, int year)
-        {
-            if (string.IsNullOrEmpty(genre))
-            {
-                return NotFound();
-            }
-            // Check if it's a combined genre (contains " + ")
-            if (genre.Contains(" + "))
-            {
-                // Parse genre names (e.g., "Action + Sci-Fi" -> ["Action", "Sci-Fi"])
-                var genreNames = genre.Split('+')
-                    .Select(g => g.Trim())
-                    .ToList();
-
-                // Get genre entities
-                var genreEntities = await _db.Genre
-                    .Where(g => genreNames.Contains(g.Name))
-                    .ToListAsync();
-
-                if (!genreEntities.Any())
-                {
-                    return NotFound();
-                }
-                // Calculate combined bit mask
-                int combinedBitMask = 0;
-                foreach (var genreEntity in genreEntities)
-                {
-                    combinedBitMask |= genreEntity.GenreId;  // Direct OR since GenreId IS the bit value
-                }
-
-                // Query films that have ALL selected genres in the specified year
-                var combinedFilms = await _db.Film
-                    .Where(f => f.Year == year && (f.GenreBitField & combinedBitMask) == combinedBitMask)
-                    .OrderBy(f => f.Title)
-                    .ToListAsync();
-                ViewBag.Genre = genre;
-                ViewBag.Year = year;
-                return View(combinedFilms);
-            }
-            else
-            {
-                // Single genre - existing logic
-                var genreEntity = await _db.Genre
-                    .FirstOrDefaultAsync(g => g.Name == genre);
-                if (genreEntity == null)
-                {
-                    return NotFound();
-                }
-                int genreBitValue = genreEntity.GenreId;
-                var films = await _db.Film
-                    .Where(f => f.Year == year && (f.GenreBitField & genreBitValue) == genreBitValue)
-                    .OrderBy(f => f.Title)
-                    .ToListAsync();
-                ViewBag.Genre = genre;
-                ViewBag.Year = year;
-                return View(films);
-            }
         }
     }
 }

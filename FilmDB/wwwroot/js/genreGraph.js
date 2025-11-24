@@ -14,7 +14,6 @@
 	let minimumYear = 1910;
 	let maximumYear = 2025;
 	let graphMode = 1; // 1 = Compare, 2 = Combine
-
 	let genreChart; // Store chart instance globally
 	let fullLabels = [];
 	let fullData = [];
@@ -142,7 +141,6 @@
 	function loadCompareData(container)
 	{
 		container.innerHTML = "<p>Loading...</p>";
-
 		// Fetch data for all selected genres
 		const promises = selectedGenres.map(genreId =>
 			fetch(`/Genre/GenreGraphData?genre_id=${genreId}`)
@@ -199,7 +197,6 @@
 	{
 		const chartElement = document.getElementById('genreChart');
 		if (!chartElement) return;
-
 		const ctx = chartElement.getContext('2d');
 
 		// Collect all unique years across all genres
@@ -227,6 +224,7 @@
 
 			return {
 				label: genreData.genreName,
+				genreId: genreData.genreId,
 				data: alignedData,
 				borderColor: getColorForIndex(index),
 				backgroundColor: getColorForIndex(index, 0.1),
@@ -256,8 +254,8 @@
 			options: {
 				responsive: true,
 				interaction: {
-					mode: 'index',
-					intersect: false,
+					mode: 'nearest', //finds closest datapoint to click
+					intersect: true, //but click on the actual point/line
 				},
 				onClick: function (event, elements)
 				{
@@ -266,10 +264,10 @@
 						const datasetIndex = elements[0].datasetIndex;
 						const index = elements[0].index;
 						const year = this.data.labels[index];
-						const genreName = this.data.datasets[datasetIndex].label;
-
-						// Navigate to the genre-year detail page
-						window.location.href = `/Film/GenreYearDetail?genre=${encodeURIComponent(genreName)}&year=${year}`;
+						const genreId = this.data.datasets[datasetIndex].genreId;
+						console.log("Clicked dataset:", datasetIndex, "GenreId:", genreId, "Year:", year);  // DEBUG
+						// Redirect to Film page with filters
+						window.location.href = `/Film/Film?genreIds=${genreId}&startYear=${year}&endYear=${year}`;
 					}
 				},
 				scales: {
@@ -350,6 +348,7 @@
 				labels: filteredLabels,
 				datasets: [{
 					label: data.genreName || 'Combined Genres',
+					genreIds: selectedGenres.join(','),
 					data: filteredData,
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					borderColor: 'rgba(54, 162, 235, 1)',
@@ -366,10 +365,9 @@
 					{
 						const index = elements[0].index;
 						const year = this.data.labels[index];
-						const genreName = this.data.datasets[0].label;
-						// For combined genres, navigate with the combined genre name
-						// The backend will need to handle this appropriately
-						window.location.href = `/Film/GenreYearDetail?genre=${encodeURIComponent(genreName)}&year=${year}`;
+						const genreIds = this.data.datasets[0].genreIds;
+						// Redirect to Film page with combined filters
+						window.location.href = `/Film/Film?genreIds=${genreIds}&startYear=${year}&endYear=${year}`;
 					}
 				},
 				scales: {
@@ -406,6 +404,7 @@
 
 		const ctx = chartElement.getContext('2d');
 		const genre = chartElement.getAttribute("data-genre");
+		const genreId = chartElement.getAttribute("data-genre-id");
 		fullLabels = JSON.parse(chartElement.getAttribute("data-labels"));
 		fullData = JSON.parse(chartElement.getAttribute("data-data"));
 
@@ -433,6 +432,7 @@
 				labels: filteredLabels,
 				datasets: [{
 					label: genre,
+					genreId: genreId, 
 					data: filteredData,
 					backgroundColor: 'rgba(54, 162, 235, 0.2)',
 					borderColor: 'rgba(54, 162, 235, 1)',
@@ -449,7 +449,9 @@
 					{
 						const index = elements[0].index;
 						const year = this.data.labels[index];
-						window.location.href = `/Film/GenreYearDetail?genre=${genre}&year=${year}`;
+						const genreId = this.data.datasets[0].genreId;
+						// Redirect to Film page with filters
+						window.location.href = `/Film/Film?genreIds=${genreId}&startYear=${year}&endYear=${year}`;
 					}
 				},
 				scales: {

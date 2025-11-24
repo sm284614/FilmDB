@@ -4,9 +4,11 @@ using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FilmDB.Controllers
 {
+    //these should all be optimised by now: using AsNoTracking and reduced to remove subqueries
     public class PersonController : Controller
     {
         private readonly ApplicationDbContext _db;
@@ -19,21 +21,28 @@ namespace FilmDB.Controllers
         public IActionResult Person()
         {
             var personList = _db.Person
+                .AsNoTracking()
+                .Take(16)
+                .OrderBy(p => p.Name) 
                 .Select(p => new PersonFilm
                 {
                     Person = p,
-                    Film = _db.Film.FirstOrDefault(f => f.FilmId == p.FirstFilmId) ?? new Film(),
-                    Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
+                    Film = _db.Film
+                        .AsNoTracking()
+                        .Where(f => f.FilmId == p.FirstFilmId)
+                        .FirstOrDefault() ?? new Film(),
+                    Count = _db.Film_Person
+                        .Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
                 })                
-                .Take(100) // Limit to some results
                 .ToList();
 
             return View(personList);
         }
         public IActionResult PersonSearch(string query)
         {
+            // if we're doing this a lot, we can alter person model to include film count and first film name (as well as firstfilmid)
+            // after adding those fields, we'd need to update them on film_person inserts (as we're not adding anything here though...)
             query = query.Trim();
-
             // Query to get people, their first film, and total film count
             var personFilms = _db.Person
                 .Where(p => p.Name.Contains(query)) // Filter people based on the query
@@ -44,7 +53,7 @@ namespace FilmDB.Controllers
                     Count = _db.Film_Person.Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
                 })
                 .OrderByDescending(pf => pf.Count) // Sort by person name
-                .Take(200) // Limit to 100 results for pagination
+                .Take(100) // Limit to 100 results for pagination
                 .ToList();
 
             // Set the result data in the ViewBag
@@ -53,19 +62,22 @@ namespace FilmDB.Controllers
             // Return the view with the result data
             return View("Person", personFilms);
         }
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult PersonFilmography(string id)
         {
-            var person = _db.Person.FirstOrDefault(p => p.PersonId == id);
-
+            // Single query to get person
+            var person = _db.Person
+                .AsNoTracking()
+                .FirstOrDefault(p => p.PersonId == id);
             if (person == null)
             {
                 return NotFound();
             }
-
-            var filmJobs = (from f in _db.Film
+            // Query filmography with AsNoTracking
+            var filmJobs = (from f in _db.Film.AsNoTracking()
                             join fp in _db.Film_Person on f.FilmId equals fp.FilmId
                             join j in _db.Job on fp.JobId equals j.JobId
-                            where fp.PersonId == id  // Replace with the person ID parameter
+                            where fp.PersonId == id
                             orderby f.Year descending, j.Title ascending
                             select new PersonFilmJobDetail
                             {
@@ -73,57 +85,77 @@ namespace FilmDB.Controllers
                                 FilmTitle = f.Title,
                                 FilmYear = f.Year,
                                 JobTitle = j.Title
-                            }).ToList();
-
+                            })
+                            .ToList();
             var model = new PersonFilmography
             {
                 Person = person,
                 FilmJobs = filmJobs
             };
-
             return View(model);
         }
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Job()
         {
-            List<Job> jobList = _db.Job.ToList();
+            var jobList = _cache.GetOrCreate("JobList", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
+                return _db.Job
+                    .AsNoTracking()
+                    .OrderBy(j => j.Title)
+                    .ToList();
+            });
+
             return View("Job", jobList);
         }
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult JobCount(int id)
         {
-            // Retrieve the job details
-            var job = _db.Job.FirstOrDefault(j => j.JobId == id);
+            // Retrieve the job details with AsNoTracking
+            var job = _db.Job
+                .AsNoTracking()
+                .FirstOrDefault(j => j.JobId == id);
             if (job == null)
             {
-                return NotFound(); // Return 404 if job not found
+                return NotFound();
             }
             var cacheKey = $"JobCount_{id}";
             var personJobCounts = _cache.GetOrCreate(cacheKey, entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(6);
-                return _db.Film_Person
-                    .Where(fp => fp.JobId == id)
-                    .GroupBy(fp => fp.PersonId)
-                    .Select(group => new PersonJobSummary
+                // Step 1: Get person stats (counts and year ranges)
+                var personStats = (from fp in _db.Film_Person.AsNoTracking()
+                                   where fp.JobId == id
+                                   join f in _db.Film.AsNoTracking() on fp.FilmId equals f.FilmId
+                                   group f by fp.PersonId into g
+                                   select new
+                                   {
+                                       PersonId = g.Key,
+                                       JobCount = g.Count(),
+                                       EarliestYear = g.Min(f => f.Year),
+                                       LatestYear = g.Max(f => f.Year)
+                                   })
+                                  .OrderByDescending(x => x.JobCount)
+                                  .Take(100)
+                                  .ToList();
+                // Step 2: Get person details for the top 100
+                var personIds = personStats.Select(x => x.PersonId).ToList();
+                var people = _db.Person
+                    .AsNoTracking()
+                    .Where(p => personIds.Contains(p.PersonId))
+                    .ToDictionary(p => p.PersonId);
+                // Step 3: Combine the data
+                return personStats
+                    .Select(stat => new PersonJobSummary
                     {
-                        Person = _db.Person.FirstOrDefault(p => p.PersonId == group.Key),
-                        JobCount = group.Count(),
-                        EarliestYear = _db.Film_Person
-                            .Where(fp => fp.PersonId == group.Key)
-                            .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year)
-                            .Min(),
-                        LatestYear = _db.Film_Person
-                            .Where(fp => fp.PersonId == group.Key)
-                            .Join(_db.Film, fp => fp.FilmId, f => f.FilmId, (fp, f) => f.Year)
-                            .Max()
+                        Person = people.ContainsKey(stat.PersonId) ? people[stat.PersonId] : new Person(),
+                        JobCount = stat.JobCount,
+                        EarliestYear = stat.EarliestYear,
+                        LatestYear = stat.LatestYear
                     })
-                    .OrderByDescending(pjc => pjc.JobCount)
-                    .Take(100)
                     .ToList();
             });
 
-            // Create the JobPersonJobCount model
             var jobPersonJobCount = new JobCount
             {
                 Job = job,
@@ -135,38 +167,65 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult Collaboration(string id)
         {
-            var collaborations = _db.Film_Person
-                .Where(fp1 => fp1.PersonId == id) // Get all films the given person worked on
-                .Join(_db.Film_Person, fp1 => fp1.FilmId, fp2 => fp2.FilmId, (fp1, fp2) => new { fp1, fp2 }) // Find others who worked on those films
-                .Where(joined => joined.fp2.PersonId != id) // Exclude the given person
-                .Join(_db.Person, joined => joined.fp2.PersonId, p => p.PersonId, (joined, p) => new { joined, p }) // Get collaborator details
-                .DefaultIfEmpty()
-                .Join(_db.Job, joined => joined!.joined.fp2.JobId, j => j.JobId, (joined, j) => new //'joined' on this line is possible null
-                {
-                    Collaborator = joined!.p, //'joined' on this line is possible null
-                    Job = j,
-                    FilmId = joined.joined.fp2.FilmId, // Include FilmId to count distinct films
-                    Year = _db.Film.Where(f => f.FilmId == joined.joined.fp2.FilmId).Select(f => f.Year).FirstOrDefault()
-                })
-                .DefaultIfEmpty()
-                .AsEnumerable()
-                .GroupBy(x => x!.Collaborator.PersonId) // Group by collaborator (not job, since we're aggregating jobs)
-                .Select(group => new PersonJobCount
-                {
-                    Person = group.First()!.Collaborator, //'group' on this line is possible null
-                    Job = new Job { Title = string.Join(", ", group.Select(x => x!.Job.Title).Distinct()) }, // Combine all jobs into a single string //'x' on this (and subsequent) line is possible null
-                    JobCount = group.Select(x => x!.FilmId).Distinct().Count(), // Count unique films instead of job entries
-                    EarliestYear = group.Min(x => x!.Year),
-                    LatestYear = group.Max(x => x!.Year)
-                })
-                .OrderByDescending(pjc => pjc.JobCount)
-                .ToList();
+            // Get the main person
+            //SELECT* FROM Person WHERE PersonId = @id
+            var person = _db.Person
+                .AsNoTracking()
+                .FirstOrDefault(p => p.PersonId == id);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            // Get all collaborations: 
+            //SELECT
+            //    p.PersonId, p.Name, p.BirthYear, p.DeathYear,
+            //    j.Title as JobTitle,
+            //    fp2.FilmId,
+            //    f.Year
+            //FROM Film_Person fp1
+            //JOIN Film_Person fp2 ON fp1.FilmId = fp2.FilmId
+            //JOIN Person p ON fp2.PersonId = p.PersonId
+            //JOIN Job j ON fp2.JobId = j.JobId
+            //JOIN Film f ON fp2.FilmId = f.FilmId
+            //WHERE fp1.PersonId = @id AND fp2.PersonId != @id
+            var collaborations = (from fp1 in _db.Film_Person.AsNoTracking()
+                                  where fp1.PersonId == id
+                                  join fp2 in _db.Film_Person.AsNoTracking()
+                                      on fp1.FilmId equals fp2.FilmId
+                                  where fp2.PersonId != id
+                                  join p in _db.Person.AsNoTracking()
+                                      on fp2.PersonId equals p.PersonId
+                                  join j in _db.Job.AsNoTracking()
+                                      on fp2.JobId equals j.JobId
+                                  join f in _db.Film.AsNoTracking()
+                                      on fp2.FilmId equals f.FilmId
+                                  select new
+                                  {
+                                      CollaboratorId = p.PersonId,
+                                      Collaborator = p,
+                                      JobTitle = j.Title,
+                                      FilmId = fp2.FilmId,
+                                      Year = f.Year
+                                  })
+                                  .ToList() // Execute query here
+                                  .GroupBy(x => x.CollaboratorId)
+                                  .Select(group => new PersonJobCount
+                                  {
+                                      Person = group.First().Collaborator,
+                                      Job = new Job
+                                      {
+                                          Title = string.Join(", ", group.Select(x => x.JobTitle).Distinct().OrderBy(t => t))
+                                      },
+                                      JobCount = group.Select(x => x.FilmId).Distinct().Count(),
+                                      EarliestYear = (short)group.Min(x => x.Year),
+                                      LatestYear = (short)group.Max(x => x.Year)
+                                  })
+                                  .OrderByDescending(pjc => pjc.JobCount)
+                                  .ToList();
 
-
-            // Create a collaboration model
             var collaborationModel = new Collaboration
             {
-                Person = _db.Person.FirstOrDefault(p => p.PersonId == id) ?? new Person(), // Get the main person's details
+                Person = person,
                 CollaborationList = collaborations
             };
 
@@ -175,13 +234,17 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult TwoPersonCollaboration(string id1, string id2)
         {
-            var sharedFilms = (from fp1 in _db.Film_Person
-                               join fp2 in _db.Film_Person on fp1.FilmId equals fp2.FilmId
-                               join f in _db.Film on fp1.FilmId equals f.FilmId
-                               join p1 in _db.Person on fp1.PersonId equals p1.PersonId
-                               join p2 in _db.Person on fp2.PersonId equals p2.PersonId
-                               join j1 in _db.Job on fp1.JobId equals j1.JobId
-                               join j2 in _db.Job on fp2.JobId equals j2.JobId
+            if (id1 == id2)
+            {
+                return View(new List<TwoPersonCollaborationDetail>());
+            }
+            var sharedFilms = (from fp1 in _db.Film_Person.AsNoTracking()
+                               join fp2 in _db.Film_Person.AsNoTracking() on fp1.FilmId equals fp2.FilmId
+                               join f in _db.Film.AsNoTracking() on fp1.FilmId equals f.FilmId
+                               join p1 in _db.Person.AsNoTracking() on fp1.PersonId equals p1.PersonId
+                               join p2 in _db.Person.AsNoTracking() on fp2.PersonId equals p2.PersonId
+                               join j1 in _db.Job.AsNoTracking() on fp1.JobId equals j1.JobId
+                               join j2 in _db.Job.AsNoTracking() on fp2.JobId equals j2.JobId
                                where fp1.PersonId == id1
                                && fp2.PersonId == id2
                                && fp1.PersonId != fp2.PersonId  // Avoid self-matching

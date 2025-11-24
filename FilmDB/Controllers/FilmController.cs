@@ -17,10 +17,77 @@ namespace FilmDB.Controllers
             _cache = cache;
         }
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)] // http cache on client for a hour
-        public IActionResult Film()
+        public IActionResult Film(string? genreIds = null, int? startYear = null, int? endYear = null)
         {
-            // Get featured films from server cache (or DB if not cached)
-            var filmList = _cache.GetOrCreate("FeaturedFilms", entry =>
+            List<Film> filmList = [];
+            List<int>? preSelectedGenres = null;
+            int[]? preSelectedYearRange = null;
+
+            // Check if we have filter parameters from graph click
+            if (!string.IsNullOrEmpty(genreIds) && startYear.HasValue && endYear.HasValue)
+            {
+                // Parse genre IDs
+                var genreIdList = genreIds.Split(',')
+                    .Select(id => int.TryParse(id, out int gId) ? gId : 0)
+                    .Where(id => id > 0)
+                    .ToList();
+
+                if (genreIdList.Any())
+                {
+                    // Calculate combined bit value
+                    int combinedBitValue = 0;
+                    foreach (var genreId in genreIdList)
+                    {
+                        combinedBitValue += genreId;
+                    }
+                    // Query filtered films
+                    filmList = _db.Film
+                        .AsNoTracking()
+                        .Where(f => f.Year >= startYear && f.Year <= endYear)
+                        .Where(f => (f.GenreBitField & combinedBitValue) == combinedBitValue)
+                        .OrderByDescending(f => f.Year)
+                        .ToList();
+
+                    // Get genre names for display
+                    var genreNames = _db.Genre
+                        .AsNoTracking()
+                        .Where(g => genreIdList.Contains(g.GenreId))
+                        .Select(g => g.Name)
+                        .ToList();
+                    ViewBag.FilterDescription = $"{string.Join("/", genreNames)} films";
+                    preSelectedGenres = genreIdList;
+                    preSelectedYearRange = new[] { startYear.Value, endYear.Value };
+                }
+                else
+                {
+                    // Invalid genre IDs, fall back to featured
+                    filmList = GetFeaturedFilms() ?? [];
+                    ViewBag.FilterDescription = "Featured Films";
+                }
+            }
+            else
+            {
+                // Default: Get featured films from cache
+                filmList = GetFeaturedFilms() ?? [];
+                ViewBag.FilterDescription = "Featured Films";
+            }
+            // Cache genre list (used on every page load)
+            var genreList = _cache.GetOrCreate("GenreList", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
+                return _db.Genre.ToList();
+            });
+
+            ViewBag.GenreList = genreList;
+            ViewBag.FilmCount = filmList?.Count ?? 0;
+            ViewBag.PreSelectedGenres = preSelectedGenres;
+            ViewBag.PreSelectedYearRange = preSelectedYearRange;
+
+            return View(filmList);
+        }
+        private List<Film>? GetFeaturedFilms()
+        {
+            return _cache.GetOrCreate("FeaturedFilms", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
                 return _db.Film
@@ -30,44 +97,6 @@ namespace FilmDB.Controllers
                     .Take(20)
                     .ToList();
             });
-            // Cache genre list too (used on every page load)
-            var genreList = _cache.GetOrCreate("GenreList", entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
-                return _db.Genre.ToList();
-            });
-            ViewBag.GenreList = genreList;
-            ViewBag.FilterDescription = "Featured Films";
-            ViewBag.FilmCount = filmList?.Count ?? 0;
-            return View(filmList);
-        }
-        public IActionResult FilterFilmsByGenre(List<int> genreIds)
-        {
-            if (genreIds.Count > 0)
-            {
-                var films = _db.Film
-                    .AsNoTracking()
-                    .Where(f => genreIds.All(gid =>
-                        _db.Film_Genre.Any(fg => fg.FilmId == f.FilmId && fg.GenreId == gid)
-                    ))
-                    .OrderByDescending(f => f.Year)
-                    .ToList();
-                var genreNames = _db.Genre
-                    .AsNoTracking()
-                    .Where(g => genreIds.Contains(g.GenreId))
-                    .OrderBy(g => g.Name)
-                    .Select(g => g.Name) // Select only the names
-                    .ToList();
-                ViewBag.FilterDescription = string.Join(@"/", genreNames) + " films";
-                ViewBag.FilmCount = films.Count;
-                return PartialView("_FilmTable", films);
-            }
-            else
-            {
-                ViewBag.FilterDescription = "No genres selected";
-                ViewBag.FilmCount = 0;
-                return PartialView("_FilmTable", new List<Film>());
-            }
         }
         public IActionResult FilterFilmsByGenreBitwise(List<int> genreIds)
         {
@@ -97,6 +126,45 @@ namespace FilmDB.Controllers
                 return PartialView("_FilmTable", new List<Film>());
             }
         }
+        public IActionResult FilterFilmsByGenreBitwiseWithYearRange(List<int> genreIds, int startYear, int endYear)
+        {
+            if (genreIds != null && genreIds.Count > 0)
+            {
+                // Calculate the bitmask for the selected genres
+                int bitField = 0;
+                foreach (var genreId in genreIds)
+                {
+                    bitField += genreId;
+                }
+                var films = _db.Film
+                    .AsNoTracking()
+                    .Where(f => f.Year >= startYear && f.Year <= endYear)
+                    .Where(f => (f.GenreBitField & bitField) == bitField)
+                    .OrderByDescending(f => f.Year)
+                    .ToList();
+                var genreNames = _db.Genre
+                    .AsNoTracking()
+                    .Where(g => genreIds.Contains(g.GenreId))
+                    .OrderBy(g => g.Name)
+                    .Select(g => g.Name)
+                    .ToList();
+                ViewBag.FilterDescription = string.Join(@"/", genreNames) + $" films ({startYear}-{endYear})";
+                ViewBag.FilmCount = films.Count;
+                return PartialView("_FilmTable", films);
+            }
+            else
+            {
+                // No genres selected, just filter by year
+                var films = _db.Film
+                    .AsNoTracking()
+                    .Where(f => f.Year >= startYear && f.Year <= endYear)
+                    .OrderByDescending(f => f.Year)
+                    .ToList();
+                ViewBag.FilterDescription = $"Films from {startYear} to {endYear}";
+                ViewBag.FilmCount = films.Count;
+                return PartialView("_FilmTable", films);
+            }
+        }
         public IActionResult FilmSearch(string query)
         {
             var films = _db.Film
@@ -109,102 +177,75 @@ namespace FilmDB.Controllers
             ViewBag.FilmCount = films.Count;
             return PartialView("_FilmTable", films);
         }
-        public IActionResult GenreYearDetail(string genre, int year)
-        {
-            // Fetch data for the specific genre and year
-            var films = _db.Film
-                .Where(f => f.Year == year)  // Filter films by the year
-                .Join(_db.Film_Genre, f => f.FilmId, fg => fg.FilmId, (f, fg) => new { f, fg })  // Join Film and FilmGenre tables
-                .Join(_db.Genre, joined => joined.fg.GenreId, g => g.GenreId, (joined, g) => new { joined.f, g })  // Join with Genre table
-                .Where(joined => joined.g.Name == genre)  // Filter by genre name
-                .OrderByDescending(joined => joined.f.Year)  // Order by year
-                .Select(joined => joined.f)  // Select only Film objects
-                .Distinct() // Ensure no duplicate films
-                .ToList();
-            ViewBag.FilterDescription = $"{genre} films from {year}";
-            ViewBag.FilmCount = films.Count;
-            // Pass data to the view
-            return View("FilmList", films);
-        }
-        public IActionResult GenreYearRangeDetail(string genre, int startYear, int endYear)
-        {
-            // Fetch data for the specific genre and year
-            var films = _db.Film
-                .Where(f => f.Year >= startYear && f.Year <= endYear)  // Filter films by the year
-                .Join(_db.Film_Genre, f => f.FilmId, fg => fg.FilmId, (f, fg) => new { f, fg })  // Join Film and FilmGenre tables
-                .Join(_db.Genre, joined => joined.fg.GenreId, g => g.GenreId, (joined, g) => new { joined.f, g })  // Join with Genre table
-                .Where(joined => joined.g.Name == genre)  // Filter by genre name
-                .OrderByDescending(joined => joined.f.Year)  // Order by year
-                .Select(joined => joined.f)  // Select only Film objects
-                .Distinct() // Ensure no duplicate films
-                .ToList();
-            ViewBag.FilterDescription = $"{genre} films between {startYear} and {endYear}";
-            ViewBag.FilmCount = films.Count;
-            // Pass data to the view
-            return View("Film", films);
-        }
         public IActionResult FilmDetail(string id)
         {
-            // Query the Film from the database based on the filmId
-            var film = _db.Film.FirstOrDefault(f => f.FilmId.ToString() == id);
+            var film = _db.Film
+                .AsNoTracking()
+                .FirstOrDefault(f => f.FilmId == id);
 
             if (film == null)
             {
-                // Handle case where film is not found
                 return NotFound();
             }
 
-            // Query the genres related to the film
-            var genres = _db.Genre
-                .AsNoTracking()
-                .Join(_db.Film_Genre, g => g.GenreId, fg => fg.GenreId, (g, fg) => new { g, fg }) // Join Genre and Film_Genre
-                .Where(joined => joined.fg.FilmId.ToString() == id) // Filter by the FilmId (id)
-                .Select(joined => joined.g) // Select the Genre object from the joined result
-                .ToList(); // Execute the query and get the list
+            // Single query for all film-person relationships
+            var allFilmPeople = (from fp in _db.Film_Person.AsNoTracking()
+                                 where fp.FilmId == id
+                                 join p in _db.Person on fp.PersonId equals p.PersonId
+                                 join j in _db.Job on fp.JobId equals j.JobId
+                                 join fpc in _db.Film_Person_Character
+                                     on new { fp.FilmId, fp.PersonId } equals new { fpc.FilmId, fpc.PersonId }
+                                     into fpcGroup
+                                 from fpc in fpcGroup.DefaultIfEmpty()
+                                 join c in _db.Character
+                                     on fpc != null ? fpc.CharacterId : (int?)null equals c.CharacterId
+                                     into charGroup
+                                 from c in charGroup.DefaultIfEmpty()
+                                 select new
+                                 {
+                                     PersonId = p.PersonId,
+                                     PersonName = p.Name,
+                                     IsCast = j.IsCast,  // Use the flag instead of JobId
+                                     JobTitle = j.Title,
+                                     CharacterId = c != null ? c.CharacterId : 0,
+                                     CharacterName = c != null ? c.Name : ""
+                                 })
+                                 .ToList();
 
-            // Query actors (JobTitle = "Actor" or "Self") and set JobTitle to the Character Name
-            var cast = _db.Film_Person
-                .AsNoTracking()
-                .Where(fp => fp.FilmId == id)
-                .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
-                .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new { joined.fp, joined.p, j }) // Join with Job
-                .Where(joined => joined.j.Title == "Actor" || joined.j.Title == "Self") // Only actors
-                .GroupJoin(_db.Film_Person_Character,
-                           joined => new { joined.fp.FilmId, joined.fp.PersonId },
-                           fpc => new { fpc.FilmId, fpc.PersonId },
-                           (joined, fpcs) => new { joined.fp, joined.p, joined.j, fpcs }) // Left join to characters
-                .SelectMany(joined => joined.fpcs.DefaultIfEmpty(), (joined, fpc) => new { joined.fp, joined.p, joined.j, fpc })
-                .GroupJoin(_db.Character,
-                           j => j.fpc != null ? j.fpc.CharacterId : (int?)null, // Check if fpc is null and handle CharacterId accordingly
-                           c => c.CharacterId,
-                           (j, characters) => new { j.fp, j.p, j.j, CharacterName = characters.Select(c => c.Name).FirstOrDefault(), CharacterID = characters.Select(c=> c.CharacterId).FirstOrDefault() })
-                .Select(j => new PersonJob
+            // Split into cast and crew in memory (already loaded)
+            var cast = allFilmPeople
+                .Where(x => x.IsCast)  // Simple boolean check
+                .Select(x => new PersonJob
                 {
-                    PersonId = j.p.PersonId,  // Person's ID
-                    PersonName = j.p.Name,    // Person's Name
-                    CharacterId = j.CharacterID,
-                    JobTitle = j.CharacterName ?? "" // Use CharacterName or empty string
+                    PersonId = x.PersonId,
+                    PersonName = x.PersonName,
+                    CharacterId = x.CharacterId,
+                    JobTitle = x.CharacterName
                 })
-                .OrderBy(pjd => pjd.JobTitle) // Sort alphabetically by actor name
-                .ToList();  // Execute the LINQ query and convert to list
+                .OrderBy(pj => pj.JobTitle)
+                .ToList();
 
+            var crew = allFilmPeople
+                .Where(x => !x.IsCast)  // Simple boolean check
+                .Select(x => new PersonJob
+                {
+                    PersonId = x.PersonId,
+                    PersonName = x.PersonName,
+                    JobTitle = x.JobTitle
+                })
+                .OrderBy(pj => pj.JobTitle)
+                .ToList();
 
-            // Query the crew involved in the film and their jobs
-            var crew = _db.Film_Person
-                 .AsNoTracking()
-                 .Where(fp => fp.FilmId.ToString() == id)
-                 .Join(_db.Person, fp => fp.PersonId, p => p.PersonId, (fp, p) => new { fp, p }) // Join FilmPerson with Person
-                 .Join(_db.Job, joined => joined.fp.JobId, j => j.JobId, (joined, j) => new PersonJob
-                 {
-                     PersonId = joined.p.PersonId, // Person's ID
-                     PersonName = joined.p.Name,     // Person's Name
-                     JobTitle = j.Title,        // Job Title
-                 })
-                 .Where(pjd => pjd.JobTitle != "Actor" && pjd.JobTitle != "Self") // Exclude "Actor" and "Self"
-                 .OrderBy(pjd => pjd.JobTitle)
-                 .ToList();  // Execute the LINQ query and convert to list
+            // Get genres
+            var genres = _db.Film_Genre
+                .AsNoTracking()
+                .Where(fg => fg.FilmId == id)
+                .Join(_db.Genre,
+                      fg => fg.GenreId,
+                      g => g.GenreId,
+                      (fg, g) => g)
+                .ToList();
 
-            // Create the FilmDetail object
             var filmDetail = new FilmDetail
             {
                 Film = film,
@@ -213,20 +254,18 @@ namespace FilmDB.Controllers
                 Crew = crew
             };
 
-
             return View(filmDetail);
         }
         public IActionResult FilmYear(int year)
         {
-            // Fetch data for the specific genre and year
+            // Fetch data for the specific year
             var films = _db.Film
                 .AsNoTracking()
-                .Where(f => f.Year == year)  // Filter films by the year
-                .OrderByDescending(fy => fy.Year)  // Order by year
+                .Where(f => f.Year == year)
+                .OrderBy(f => f.Title)  
                 .ToList();
             ViewBag.FilterDescription = $"Films from {year}";
-            ViewBag.FilmCount = films.Count();
-            // Pass data to the view
+            ViewBag.FilmCount = films.Count; 
             return View("FilmList", films);
         }
     }

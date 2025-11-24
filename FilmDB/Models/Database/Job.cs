@@ -10,5 +10,7 @@ namespace FilmDB.Models.Database
         public byte JobId { get; set; }
         [Column("title")]
         public string Title { get; set; } = "";
+        [Column("is_cast")]
+        public bool IsCast { get; set; }
     }
 }
