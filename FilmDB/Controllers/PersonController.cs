@@ -73,7 +73,7 @@ namespace FilmDB.Controllers
             {
                 return NotFound();
             }
-            // Query filmography with AsNoTracking
+            // Query filmography: films featuring the given personid
             var filmJobs = (from f in _db.Film.AsNoTracking()
                             join fp in _db.Film_Person on f.FilmId equals fp.FilmId
                             join j in _db.Job on fp.JobId equals j.JobId
@@ -105,13 +105,12 @@ namespace FilmDB.Controllers
                     .OrderBy(j => j.Title)
                     .ToList();
             });
-
             return View("Job", jobList);
         }
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult JobCount(int id)
         {
-            // Retrieve the job details with AsNoTracking
+            // Retrieve the job details
             var job = _db.Job
                 .AsNoTracking()
                 .FirstOrDefault(j => j.JobId == id);
