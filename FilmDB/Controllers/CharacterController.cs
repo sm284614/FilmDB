@@ -2,6 +2,7 @@
 using FilmDB.Models;
 using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Drawing;
 
@@ -24,7 +25,8 @@ namespace FilmDB.Controllers
             //var popularCharacters = FrequentCharacters(40);
             return View(popularCharacters);
         }
-        public List<CharacterCount>? CuratedCharacters()
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
+        public List<CharacterCount> CuratedCharacters()
         {
             // Curated list of iconic character IDs
             // TODO: Add your actual character IDs here
@@ -76,27 +78,31 @@ namespace FilmDB.Controllers
             var popularCharacters = _cache.GetOrCreate("IconicCharacters", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
-                // Get characters and their appearance counts
                 var characters = _db.Character
+                    .AsNoTracking()
                     .Where(c => popularCharacterIds.Contains(c.CharacterId))
-                    .Select(c => new CharacterCount
-                    {
-                        Character = c,
-                        Count = _db.Film_Person_Character.Count(fpc => fpc.CharacterId == c.CharacterId)
-                    })
+                    .GroupJoin(
+                        _db.Film_Person_Character,
+                        c => c.CharacterId,
+                        fpc => fpc.CharacterId,
+                        (c, fpcs) => new CharacterCount
+                        {
+                            Character = c,
+                            Count = fpcs.Count()
+                        })
                     .ToList();
-                // Sort by the order they appear in iconicCharacterIds array
-                // This preserves your manual ordering
                 return popularCharacterIds
                     .Select(id => characters.FirstOrDefault(c => c.Character.CharacterId == id))
                     .Where(c => c != null)
                     .ToList();
-            });
-            return popularCharacters;
+            }) ?? new List<CharacterCount>()!;
+
+            return popularCharacters!;
         }
         public List<CharacterCount>? FrequentCharacters(int quantity)
         {
             var characters = _db.Character
+                .AsNoTracking()
                 .Select(c => new CharacterCount
                 {
                     Character = c,
@@ -109,29 +115,42 @@ namespace FilmDB.Controllers
 
             return characters;
         }
+        [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
         public IActionResult CharacterSearch(string query)
         {
             var characters = _db.Character
+                .AsNoTracking()
                 .Where(c => c.Name.Contains(query))
-                .Select(c => new CharacterCount
-                {
-                    Character = c,
-                    Count = _db.Film_Person_Character.Count(fpc => fpc.CharacterId == c.CharacterId)
-                }).OrderByDescending(cc => cc.Count)
+                .GroupJoin(
+                    _db.Film_Person_Character,
+                    c => c.CharacterId,
+                    fpc => fpc.CharacterId,
+                    (c, fpcc) => new CharacterCount
+                    {
+                        Character = c,
+                        Count = fpcc.Count()
+                    })
+                .OrderByDescending(cc => cc.Count)
                 .ToList();
+
             return PartialView("_CharacterTable", characters);
         }
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult CharacterDetail(int characterId)
         {
-            var character = _db.Character
+            // Step 1: Get character name
+            var characterName = _db.Character
+                .AsNoTracking()
                 .Where(c => c.CharacterId == characterId)
+                .Select(c => c.Name)
                 .FirstOrDefault();
-            if (character == null)
+            if (characterName == null)
             {
                 return NotFound();
             }
-
+            // Step 2: Get all film appearances with actors
             var personFilms = _db.Film_Person_Character
+                .AsNoTracking()
                 .Where(fpc => fpc.CharacterId == characterId)
                 .Join(_db.Film, fpc => fpc.FilmId, f => f.FilmId, (fpc, film) => new { fpc, film })
                 .Join(_db.Person, f => f.fpc.PersonId, p => p.PersonId, (f, person) => new PersonFilm
@@ -141,7 +160,7 @@ namespace FilmDB.Controllers
                 })
                 .OrderByDescending(fp => fp.Film!.Year)
                 .ToList();
-            ViewBag.CharacterName = character.Name;
+            ViewBag.CharacterName = characterName;
             return View(personFilms);
         }
     }
