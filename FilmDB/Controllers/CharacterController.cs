@@ -61,7 +61,6 @@ namespace FilmDB.Controllers
             _db = db;
             _cache = cache;
         }
-        // Main character page - shows popular characters by appearance count (cached)
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public IActionResult Character()
         {

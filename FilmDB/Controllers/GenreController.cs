@@ -16,10 +16,6 @@ namespace FilmDB.Controllers
             _db = db;
             _cache = cache;
         }
-        /// <summary>
-        /// List of film genres, ordered by internal id
-        /// </summary>
-        /// <returns></returns>
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Genre()
         {
@@ -33,11 +29,6 @@ namespace FilmDB.Controllers
             });
             return View(genreList);
         }
-        /// <summary>
-        /// Returns JSON data for films in a genre by year for graphing. (e.g. HORROR, 16, [(1968, 23), (1969, 45), (1970, 67)...])
-        /// </summary>
-        /// <param name="genre_id"></param>
-        /// <returns></returns>
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreGraphData(int genre_id)
         {
@@ -155,9 +146,6 @@ namespace FilmDB.Controllers
             }
             return View(genreData);
         }
-        /// <summary>
-        /// Returns a GenreFilmYearCount: a genre with a list of it's film-year counts. (e.g. HORROR, 16, [(1968, 23), (1969, 45), (1970, 67)...])
-        /// </summary>
         private GenreFilmYearCount? GetCachedGenreData(int genre_id)
         {
             return _cache.GetOrCreate($"GenreData_{genre_id}", entry =>

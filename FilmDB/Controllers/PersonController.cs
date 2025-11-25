@@ -13,29 +13,49 @@ namespace FilmDB.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
+        private readonly static int NumberOfPeople = 16;
         public PersonController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
             _cache = cache;
         }
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Person()
         {
-            var personList = _db.Person
-                .AsNoTracking()
-                .Take(16)
-                .OrderBy(p => p.Name) 
-                .Select(p => new PersonFilm
+            var personList = _cache.GetOrCreate("PersonList", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
+                // Get the first n (16) people ordered by name
+                var people = _db.Person
+                    .AsNoTracking()
+                    .Take(NumberOfPeople)
+                    .ToList();
+                // Get all their first film IDs
+                var firstFilmIds = people.Select(p => p.FirstFilmId).ToList();
+                // Fetch all first films
+                var firstFilms = _db.Film
+                    .AsNoTracking()
+                    .Where(f => firstFilmIds.Contains(f.FilmId))
+                    .ToDictionary(f => f.FilmId);
+                // Get film counts for all these people in one query
+                var filmCounts = _db.Film_Person
+                    .AsNoTracking()
+                    .Where(fp => people.Select(p => p.PersonId).Contains(fp.PersonId))
+                    .GroupBy(fp => fp.PersonId)
+                    .Select(g => new { PersonId = g.Key, Count = g.Count() })
+                    .ToDictionary(x => x.PersonId, x => x.Count);
+                // Combine everything
+                return people.Select(p => new PersonFilm
                 {
                     Person = p,
-                    Film = _db.Film
-                        .AsNoTracking()
-                        .Where(f => f.FilmId == p.FirstFilmId)
-                        .FirstOrDefault() ?? new Film(),
-                    Count = _db.Film_Person
-                        .Count(fp => fp.PersonId == p.PersonId) // Count total films for the person
-                })                
-                .ToList();
-
+                    Film = firstFilms.ContainsKey(p.FirstFilmId)
+                        ? firstFilms[p.FirstFilmId]
+                        : new Film(),
+                    Count = filmCounts.ContainsKey(p.PersonId)
+                        ? filmCounts[p.PersonId]
+                        : 0
+                }).ToList();
+            }) ?? new List<PersonFilm>();
             return View(personList);
         }
         public IActionResult PersonSearch(string query)
