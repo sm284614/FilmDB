@@ -2,7 +2,7 @@
 @{
 	ViewData["Title"] = "People in Film";
 }
-<div class="container">
+<div class="sub-container">
 	<div class="d-flex justify-content-between align-items-center">
 		<h1>People</h1>
 		<form asp-controller="Person" asp-action="PersonSearch" method="get" class="d-flex">
@@ -14,7 +14,7 @@
 	{
 		<p>@ViewBag.ResultData</p>
 	}
-	<div class="table-responsive contentTable">
+	<div class="contentTable">
 		<table class="table table-striped table-hover">
 			<thead>
 				<tr>

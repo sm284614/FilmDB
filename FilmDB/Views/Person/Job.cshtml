@@ -1,7 +1,7 @@
 ﻿@{
 	ViewData["Title"] = "Jobs in Film";
 }
-<div class="container">
+<div class="sub-container">
 	<h1>Job Explorer</h1>
 	<div class="col-12 mx-auto">
 		@foreach (var job in Model)
@@ -11,7 +11,7 @@
 			</a>
 		}
 	</div>
-	<div id="jobCountContainer" class="mt-1"></div>
+	<div id="jobCountContainer" class="sub-container mt-3"></div>
 </div>
 
 <script>

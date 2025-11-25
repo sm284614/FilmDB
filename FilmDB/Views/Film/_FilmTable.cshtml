@@ -7,7 +7,7 @@
 			@ViewBag.FilterDescription
 			@if (ViewBag.FilmCount != null)
 			{
-				<span id ="film-count" class="fs-5">(@ViewBag.FilmCount films)</span>
+				<span id="film-count" class="fs-5">(@ViewBag.FilmCount films)</span>
 			}
 		</h2>
 	}
@@ -16,41 +16,43 @@
 		<h1>All films</h1>
 	}
 </div>
-<div class="table-responsive">
-	<table class="table table-striped table-hover">
-		<thead style="position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
-			<tr>
-				<th class="w-75">Title</th>
-				<th class="w-10">Year</th>
-				<th class="w-10">Run time</th>
-				<th class="w-5 text-center">Web</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var film in Model)
-			{
-				<tr data-year="@film.Year">
-					<td>
-						<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@film.FilmId">
-							@film.Title
-						</a>
-					</td>
-					<td>
-						<a asp-controller="Film" asp-action="FilmYear" asp-route-year="@film.Year">
-							@film.Year
-						</a>
-					</td>
-					<td>@film.RunTimeMinutes minutes</td>
-					<td class="text-center">
-						@{
-							string query = $"https://www.duckduckgo.com/search?q={Uri.EscapeDataString(film.Title)},+{film.Year}";
-						}
-						<a href="@query" target="_blank" rel="noopener noreferrer">
-							<img src="/image/box-arrow-up-right.svg" alt="Search for @film.Title" />
-						</a>
-					</td>
+<div class="contentTable">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead style="position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
+				<tr>
+					<th class="w-75">Title</th>
+					<th class="w-10">Year</th>
+					<th class="w-10">Run time</th>
+					<th class="w-5 text-center">Web</th>
 				</tr>
-			}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				@foreach (var film in Model)
+				{
+					<tr data-year="@film.Year">
+						<td>
+							<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@film.FilmId">
+								@film.Title
+							</a>
+						</td>
+						<td>
+							<a asp-controller="Film" asp-action="FilmYear" asp-route-year="@film.Year">
+								@film.Year
+							</a>
+						</td>
+						<td>@film.RunTimeMinutes minutes</td>
+						<td class="text-center">
+							@{
+								string query = $"https://www.duckduckgo.com/search?q={Uri.EscapeDataString(film.Title)},+{film.Year}";
+							}
+							<a href="@query" target="_blank" rel="noopener noreferrer">
+								<img src="/image/box-arrow-up-right.svg" alt="Search for @film.Title" />
+							</a>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
 </div>

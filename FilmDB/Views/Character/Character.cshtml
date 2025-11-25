@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Film Characters";
 }
-<div class="container">
+<div class="sub-container">
     <div class="d-flex justify-content-between align-items-center">
         <h1>Film Characters</h1>
         <form id="characterSearchForm" class="d-flex">
@@ -30,13 +30,14 @@
             ))
         </script>
     }
-    <div id="characterTableContainer" class="contentTable mt-4" style="display: none;">
+    <div id="characterTableContainer" class="sub-container mt-3" >
         <!-- Search results will appear here -->
     </div>
 </div>
 
 <script src="~/lib/wordcloud2.min.js"></script>
 <script src="~/js/wordCloud.js"></script>
+<script src="~/js/chcracterSearch.js"></script>
 
 <style>
     #characterCloud {
@@ -45,21 +46,5 @@
         height:600px; 
         border: 1px solid #dee2e6; 
         border-radius: 8px;
-    }
-    
-    #wordCloudContainer {
-        background: #f8f9fa;
-        padding: 5px;
-        border-radius: 8px;
-    }
-    
-    #characterTableContainer:empty {
-        display: none;
-    }
-
-    #characterTableContainer {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
     }
 </style>
