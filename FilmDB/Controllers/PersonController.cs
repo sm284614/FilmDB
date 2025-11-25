@@ -4,7 +4,6 @@ using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FilmDB.Controllers
 {

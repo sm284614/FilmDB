@@ -145,7 +145,7 @@ namespace FilmDB.Controllers
                     .OrderBy(g => g.Name)
                     .Select(g => g.Name)
                     .ToList();
-                ViewBag.FilterDescription = string.Join(@"/", genreNames) + $" films ({startYear}-{endYear})";
+                ViewBag.FilterDescription = string.Join(@"/", genreNames) + $" films";
                 ViewBag.FilmCount = films.Count;
                 return PartialView("_FilmTable", films);
             }

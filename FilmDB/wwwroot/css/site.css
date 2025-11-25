@@ -58,7 +58,7 @@ body {
     flex-direction: column;
     height: calc(98vh - 200px);
     min-height: 0;
-    /*    overflow-y: auto;*/
+    overflow-y: scroll;
 }
 
     .contentTable .table-responsive {
