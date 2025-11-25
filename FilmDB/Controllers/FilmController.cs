@@ -16,13 +16,12 @@ namespace FilmDB.Controllers
             _db = db;
             _cache = cache;
         }
-        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)] // http cache on client for a hour
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Film(string? genreIds = null, int? startYear = null, int? endYear = null)
         {
             List<Film> filmList = [];
             List<int>? preSelectedGenres = null;
             int[]? preSelectedYearRange = null;
-
             // Check if we have filter parameters from graph click
             if (!string.IsNullOrEmpty(genreIds) && startYear.HasValue && endYear.HasValue)
             {
@@ -47,7 +46,6 @@ namespace FilmDB.Controllers
                         .Where(f => (f.GenreBitField & combinedBitValue) == combinedBitValue)
                         .OrderByDescending(f => f.Year)
                         .ToList();
-
                     // Get genre names for display
                     var genreNames = _db.Genre
                         .AsNoTracking()
@@ -77,7 +75,6 @@ namespace FilmDB.Controllers
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
                 return _db.Genre.ToList();
             });
-
             ViewBag.GenreList = genreList;
             ViewBag.FilmCount = filmList?.Count ?? 0;
             ViewBag.PreSelectedGenres = preSelectedGenres;
@@ -165,29 +162,29 @@ namespace FilmDB.Controllers
                 return PartialView("_FilmTable", films);
             }
         }
+        [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
         public IActionResult FilmSearch(string query)
         {
             var films = _db.Film
                 .AsNoTracking()
-            .Where(f => f.Title.Contains(query))
-            .OrderByDescending(f => f.Year)
-            .ThenBy(f => f.Title) // Then order by title (ascending)
-            .ToList();
+                .Where(f => f.Title.Contains(query))
+                .OrderByDescending(f => f.Year)
+                .ThenBy(f => f.Title) // Then order by title (ascending)
+                .ToList();
             ViewBag.FilterDescription = $"Titles matching '{query}'";
             ViewBag.FilmCount = films.Count;
             return PartialView("_FilmTable", films);
         }
+        [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
         public IActionResult FilmDetail(string id)
         {
             var film = _db.Film
                 .AsNoTracking()
                 .FirstOrDefault(f => f.FilmId == id);
-
             if (film == null)
             {
                 return NotFound();
             }
-
             // Single query for all film-person relationships
             var allFilmPeople = (from fp in _db.Film_Person.AsNoTracking()
                                  where fp.FilmId == id
@@ -211,7 +208,6 @@ namespace FilmDB.Controllers
                                      CharacterName = c != null ? c.Name : ""
                                  })
                                  .ToList();
-
             // Split into cast and crew in memory (already loaded)
             var cast = allFilmPeople
                 .Where(x => x.IsCast)  // Simple boolean check
@@ -224,7 +220,6 @@ namespace FilmDB.Controllers
                 })
                 .OrderBy(pj => pj.JobTitle)
                 .ToList();
-
             var crew = allFilmPeople
                 .Where(x => !x.IsCast)  // Simple boolean check
                 .Select(x => new PersonJob
@@ -235,7 +230,6 @@ namespace FilmDB.Controllers
                 })
                 .OrderBy(pj => pj.JobTitle)
                 .ToList();
-
             // Get genres
             var genres = _db.Film_Genre
                 .AsNoTracking()
@@ -245,7 +239,6 @@ namespace FilmDB.Controllers
                       g => g.GenreId,
                       (fg, g) => g)
                 .ToList();
-
             var filmDetail = new FilmDetail
             {
                 Film = film,
@@ -253,12 +246,12 @@ namespace FilmDB.Controllers
                 Cast = cast,
                 Crew = crew
             };
-
             return View(filmDetail);
         }
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult FilmYear(int year)
         {
-            // Fetch data for the specific year
+            // Fetch data for films from the specific year
             var films = _db.Film
                 .AsNoTracking()
                 .Where(f => f.Year == year)

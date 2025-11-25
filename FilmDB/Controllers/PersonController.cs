@@ -91,7 +91,8 @@ namespace FilmDB.Controllers
                 .FirstOrDefault(p => p.PersonId == id);
             if (person == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Person not found";
+                return View();
             }
             // Query filmography: films featuring the given personid
             var filmJobs = (from f in _db.Film.AsNoTracking()
@@ -107,12 +108,12 @@ namespace FilmDB.Controllers
                                 JobTitle = j.Title
                             })
                             .ToList();
-            var model = new PersonFilmography
+            var filmography = new PersonFilmography
             {
                 Person = person,
                 FilmJobs = filmJobs
             };
-            return View(model);
+            return View(filmography);
         }
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Job()
