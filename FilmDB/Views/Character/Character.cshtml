@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Film Characters";
 }
-<div class="container" style="border-width:1px; border-color:black">
+<div class="container">
     <div class="d-flex justify-content-between align-items-center">
         <h1>Film Characters</h1>
         <form id="characterSearchForm" class="d-flex">
@@ -17,7 +17,7 @@
         <div id="wordCloudContainer" class="mt-4">
             <h3>Iconic Characters</h3>
             <p class="text-muted">Click any character to view details</p>
-            <canvas id="characterCloud" style="width: 90%; height: 500px; border: 1px solid #dee2e6; border-radius: 8px;"></canvas>
+            <canvas id="characterCloud"></canvas>
         </div>
         <!-- Hidden data for JavaScript -->
         <script id="characterData" type="application/json">
@@ -30,7 +30,7 @@
             ))
         </script>
     }
-    <div id="characterTableContainer" class="contentTable mt-4">
+    <div id="characterTableContainer" class="contentTable mt-4" style="display: none;">
         <!-- Search results will appear here -->
     </div>
 </div>
@@ -41,22 +41,20 @@
 <style>
     #characterCloud {
         cursor: default;
+        width: 100%; 
+        height:600px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 8px;
     }
     
     #wordCloudContainer {
         background: #f8f9fa;
-        padding: 20px;
+        padding: 5px;
         border-radius: 8px;
     }
     
     #characterTableContainer:empty {
         display: none;
-    }
-
-    .container {
-        height: 50%;
-        display: flex;
-        flex-direction: column;
     }
 
     #characterTableContainer {

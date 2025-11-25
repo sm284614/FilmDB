@@ -30,6 +30,22 @@ body {
     text-align: start;
 }
 
+.debug-border-red{
+    border: 1px solid red;
+}
+.debug-border-green {
+    border: 1px solid green;
+}
+.debug-border-blue {
+    border: 1px solid blue;
+}
+
+.main {
+    min-height: calc(100vh - 140px); /* Adjust based on header/footer height */
+    display: flex;
+    flex-direction: column;
+}
+
 .m-x {
     margin: 0.1rem !important;
 }
