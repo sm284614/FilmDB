@@ -12,6 +12,50 @@ namespace FilmDB.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
+        private static readonly int[] CuratedCharacterIds = new[]
+        {
+            11981,  // Batman
+            17190, // Superman
+            102027,  // Spider man
+            169943, //Harley Quinn
+            17192, //Lois Lane
+
+            23557, //Queen Victoria
+            7259, //queen elizabeth
+            21554, //President
+            27832, //Joan of Arc
+            3608, //Cleopatra
+            8067, //Marie Antoinette
+            6806, //Calamity Jane
+
+            33764, // God
+            14018, //dracula
+            473, //Satan
+            1431, //Hercules
+            35320, //Zeus
+            42739, //pandora
+            17563, //king arthur
+            22371, //queen Guinevere
+            32892, //Mary Magdalene
+            49699, //Baba Yaga
+
+            4792, // Sherlock Holmes
+            38759, //Hercule Poirot
+            1202, //Peter Pan
+            22534, //Wendy Darling
+            7752, //Robin Hood
+            31934, //Zorro
+            7582, //Snow White
+            78, //Cinderella
+            137565, //Little Red Riding Hood
+            16844, //Lady Macbeth
+            36504, //Hamlet
+            13231, //Jane Eyre
+            9801, //Elizabeth Bennet
+            6038, //Fantine
+            33791,  // James Bond
+            79862, //Jack Ryan
+        };
         public CharacterController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
@@ -30,57 +74,13 @@ namespace FilmDB.Controllers
         {
             // Curated list of iconic character IDs
             // TODO: Add your actual character IDs here
-            var popularCharacterIds = new[]
-            {
-                11981,  // Batman
-                17190, // Superman
-                102027,  // Spider man
-                169943, //Harley Quinn
-                17192, //Lois Lane
-
-                23557, //Queen Victoria
-                7259, //queen elizabeth
-                21554, //President
-                27832, //Joan of Arc
-                3608, //Cleopatra
-                8067, //Marie Antoinette
-                6806, //Calamity Jane
-
-                33764, // God
-                14018, //dracula
-                473, //Satan
-                1431, //Hercules
-                35320, //Zeus
-                42739, //pandora
-                17563, //king arthur
-                22371, //queen Guinevere
-                32892, //Mary Magdalene
-                49699, //Baba Yaga
-
-                4792, // Sherlock Holmes
-                38759, //Hercule Poirot
-                1202, //Peter Pan
-                22534, //Wendy Darling
-                7752, //Robin Hood
-                31934, //Zorro
-                7582, //Snow White
-                78, //Cinderella
-                137565, //Little Red Riding Hood
-                16844, //Lady Macbeth
-                36504, //Hamlet
-                13231, //Jane Eyre
-                9801, //Elizabeth Bennet
-                6038, //Fantine
-                33791,  // James Bond
-                79862, //Jack Ryan
-            };
             // Get iconic characters from cache (or DB if not cached)
             var popularCharacters = _cache.GetOrCreate("IconicCharacters", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
                 var characters = _db.Character
                     .AsNoTracking()
-                    .Where(c => popularCharacterIds.Contains(c.CharacterId))
+                    .Where(c => CuratedCharacterIds.Contains(c.CharacterId))
                     .GroupJoin(
                         _db.Film_Person_Character,
                         c => c.CharacterId,
@@ -91,12 +91,11 @@ namespace FilmDB.Controllers
                             Count = fpcs.Count()
                         })
                     .ToList();
-                return popularCharacterIds
+                return CuratedCharacterIds
                     .Select(id => characters.FirstOrDefault(c => c.Character.CharacterId == id))
                     .Where(c => c != null)
                     .ToList();
             }) ?? new List<CharacterCount>()!;
-
             return popularCharacters!;
         }
         public List<CharacterCount>? FrequentCharacters(int quantity)
