@@ -10,13 +10,12 @@
 			<p class="d-inline">(@Model.Person.BirthYear - @(Model.Person.DeathYear.HasValue? Model.Person.DeathYear.Value.ToString() : "present")) : @Model.FilmJobs.Count film credits</p>
 		}
 	</div>
-
 	<!-- Job Filter Buttons -->
 	<div class="d-flex align-items-center">
-		<button class="btn btn-secondary m-1" onclick="filterTable('all')">Show All</button> <!-- Button to reset filter -->
+		<button class="btn btn-secondary m-1 job-filter-btn" data-job="all">Show All</button>
 		@foreach (var jobTitle in Model.FilmJobs.Select(fj => fj.JobTitle).Distinct())
 		{
-			<button class="btn btn-primary m-1" onclick="filterTable('@jobTitle')">
+			<button class="btn btn-primary m-1 job-filter-btn" data-job="@jobTitle">
 				@jobTitle
 			</button>
 		}
@@ -24,7 +23,6 @@
 			View collaborations for @Model.Person.Name
 		</a>
 	</div>
-
 	<!-- Filmography Table -->
 	<div class="contentTable">
 		<div class="table-responsive">
@@ -54,6 +52,4 @@
 		</div>
 	</div>
 </div>
-
-<!-- JavaScript for Filtering -->
 <script src="~/js/personFilmography.js"></script>
