@@ -110,7 +110,6 @@ namespace FilmDB.Controllers
                 .OrderByDescending(cc => cc.Count)
                 .Take(quantity)
                 .ToList();
-
             return characters;
         }
         [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]

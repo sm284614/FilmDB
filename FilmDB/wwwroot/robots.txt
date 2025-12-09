@@ -1,2 +1,107 @@
-User-agent: *
+# Block AI scrapers/training bots
+User-agent: GPTBot
 Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+# Block social media and SEO bots
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12Bot
+Disallow: /
+
+User-agent: facebookexternalhit
+Disallow: /
+
+User-agent: Twitterbot
+Disallow: /
+
+User-agent: LinkedInBot
+Disallow: /
+
+User-agent: Slackbot
+Disallow: /
+
+User-agent: Pinterestbot
+Disallow: /
+
+#block uptime bots and monitoring services
+
+User-agent: Pingdom.com_bot
+Disallow: /
+
+User-agent: UptimeRobot
+Disallow: /
+
+User-agent: BetterStackBot
+Disallow: /
+
+User-agent: cron-job.org
+Disallow: /
+
+# block security bots
+
+User-agent: censys.io
+Disallow: /
+
+User-agent: shodan
+Disallow: /
+
+User-agent: BitSightBot
+Disallow: /
+
+# Allow major search engines but with crawl delay
+User-agent: Googlebot
+Disallow: /
+
+User-agent: bingbot
+Disallow: /
+
+User-agent: slurp
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+# Block everything else by default
+User-agent: *
+Crawl-delay: 10

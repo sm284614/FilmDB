@@ -9,7 +9,7 @@ using System.Security.Authentication.ExtendedProtection;
 
 namespace FilmDB
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -25,6 +25,13 @@ namespace FilmDB
             builder.Services.AddResponseCaching();
 
             WebApplication app = builder.Build();
+
+            // Apply pending migrations
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.Database.Migrate();
+            }
 
             app.UseSwagger();
             if (app.Environment.IsDevelopment())

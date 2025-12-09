@@ -11,7 +11,7 @@
 			<button type="submit" class="btn btn-primary">Search</button>
 		</form>
 	</div>
-	<div id="filmTableContainer sub-container">
+	<div id="filmTableContainer" class="sub-container mt-3">
 		@await Html.PartialAsync("_FilmTable", (IEnumerable<Film>)Model)
 	</div>
 </div>

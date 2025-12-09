@@ -19,7 +19,7 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Film(string? genreIds = null, int? startYear = null, int? endYear = null)
         {
-            List<Film> filmList = [];
+            List<Film> filmList;
             List<int>? preSelectedGenres = null;
             int[]? preSelectedYearRange = null;
             // Check if we have filter parameters from graph click
