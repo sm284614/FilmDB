@@ -21,7 +21,7 @@ namespace FilmDB
             builder.Services.AddControllersWithViews();
             builder.Services.AddMemoryCache();
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddRateLimiter(options => { options.AddFixedWindowLimiter("default", opt => { opt.Window = TimeSpan.FromSeconds(10); opt.PermitLimit = 20; opt.QueueLimit = 0; }); });
+            builder.Services.AddRateLimiter(options => options.AddFixedWindowLimiter("default", opt => { opt.Window = TimeSpan.FromSeconds(10); opt.PermitLimit = 20; opt.QueueLimit = 0; }));
             builder.Services.AddResponseCaching();
 
             WebApplication app = builder.Build();
@@ -32,18 +32,15 @@ namespace FilmDB
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 db.Database.Migrate();
             }
-
-            app.UseSwagger();
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwaggerUI();
-            }
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+            }
+            else
+            {
+                app.UseDeveloperExceptionPage();
             }
             app.Use(async (context, next) =>
             {
@@ -59,21 +56,24 @@ namespace FilmDB
 
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseWebSockets();
-            app.UseDeveloperExceptionPage();
             app.UseResponseCaching();
             app.UseAuthorization();
-
+            app.Use(async (context, next) =>
+            {
+                // CSP
+                var csp = BuildContentSecurityPolicy(app.Environment.IsDevelopment());
+                context.Response.Headers.Append("Content-Security-Policy", csp);
+                // Security headers
+                context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+                context.Response.Headers.Append("X-Frame-Options", "DENY");
+                context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+                context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+                context.Response.Headers.Append("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+                await next();
+            });
             app.MapStaticAssets();
             app.UseRateLimiter();
             app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
-
-            app.Use(async (context, next) =>
-            {
-                var csp = BuildContentSecurityPolicy(app.Environment.IsDevelopment());
-                context.Response.Headers.Append("Content-Security-Policy", csp);
-                await next();
-            });
             app.Run();
         }
         static string BuildContentSecurityPolicy(bool isDevelopment)
@@ -88,7 +88,7 @@ namespace FilmDB
             var styleSources = new List<string>
             {
                 "'self'",
-                "'unsafe-inline'",
+                "'unsafe-inline'", //check what actually needs this (bootstrap?)
                 "https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css"
             };
             if (isDevelopment)
