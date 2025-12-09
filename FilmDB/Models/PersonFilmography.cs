@@ -4,7 +4,7 @@ namespace FilmDB.Models
 {
     public class PersonFilmography
     {
-        public Person? Person { get; set; } 
+        public Person? Person { get; set; }
         public List<PersonFilmJobDetail>? FilmJobs { get; set; }
     }
 }

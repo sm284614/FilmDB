@@ -2,6 +2,6 @@
 {
     public class GenreFilmYearCountList
     {
-        public List<GenreFilmYearCount> GenreYearFilmCounts { get; set; } = new List<GenreFilmYearCount>();
+        public List<GenreFilmYearCount> GenreYearFilmCounts { get; set; } = [];
     }
 }

@@ -219,7 +219,7 @@
 			let alignedData = filteredYears.map(year =>
 			{
 				let yearIndex = genreData.years.indexOf(year);
-				return yearIndex !== -1 ? genreData.counts[yearIndex] : 0;
+				return yearIndex === -1 ? 0 : genreData.counts[yearIndex];
 			});
 
 			return {
@@ -227,7 +227,7 @@
 				genreId: genreData.genreId,
 				data: alignedData,
 				borderColor: getColorForIndex(index),
-				backgroundColor: getColorForIndex(index, 0.1),
+				backgroundColor: getColorForIndex(index),
 				borderWidth: 2,
 				fill: false,
 				tension: 0.1

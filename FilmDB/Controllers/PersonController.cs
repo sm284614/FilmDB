@@ -12,7 +12,7 @@ namespace FilmDB.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
-        private readonly static int NumberOfPeople = 16;
+        private const int NumberOfPeople = 16;
         public PersonController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
@@ -30,7 +30,7 @@ namespace FilmDB.Controllers
                     .Take(NumberOfPeople)
                     .ToList();
                 // Get all their first film IDs
-                var firstFilmIds = people.Select(p => p.FirstFilmId).ToList();
+                var firstFilmIds = people.ConvertAll(p => p.FirstFilmId);
                 // Fetch all first films
                 var firstFilms = _db.Film
                     .AsNoTracking()
@@ -44,17 +44,13 @@ namespace FilmDB.Controllers
                     .Select(g => new { PersonId = g.Key, Count = g.Count() })
                     .ToDictionary(x => x.PersonId, x => x.Count);
                 // Combine everything
-                return people.Select(p => new PersonFilm
+                return people.ConvertAll(p => new PersonFilm
                 {
                     Person = p,
-                    Film = firstFilms.ContainsKey(p.FirstFilmId)
-                        ? firstFilms[p.FirstFilmId]
-                        : new Film(),
-                    Count = filmCounts.ContainsKey(p.PersonId)
-                        ? filmCounts[p.PersonId]
-                        : 0
-                }).ToList();
-            }) ?? new List<PersonFilm>();
+                    Film = firstFilms.TryGetValue(p.FirstFilmId, out Film? filmValue) ? filmValue : new Film(),
+                    Count = filmCounts.TryGetValue(p.PersonId, out int personValue) ? personValue : 0
+                });
+            }) ?? [];
             return View(personList);
         }
         public IActionResult PersonSearch(string query)
@@ -130,6 +126,10 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult JobCount(int id)
         {
+            if (!ModelState.IsValid || id <= 0)
+            {
+                return BadRequest();
+            }
             // Retrieve the job details
             var job = _db.Job
                 .AsNoTracking()
@@ -158,23 +158,22 @@ namespace FilmDB.Controllers
                                   .Take(100)
                                   .ToList();
                 // Step 2: Get person details for the top 100
-                var personIds = personStats.Select(x => x.PersonId).ToList();
+                var personIds = personStats.ConvertAll(x => x.PersonId);
                 var people = _db.Person
                     .AsNoTracking()
                     .Where(p => personIds.Contains(p.PersonId))
                     .ToDictionary(p => p.PersonId);
                 // Step 3: Combine the data
                 return personStats
-                    .Select(stat => new PersonJobSummary
+                    .ConvertAll(stat => new PersonJobSummary
                     {
-                        Person = people.ContainsKey(stat.PersonId) ? people[stat.PersonId] : new Person(),
+                        Person = people.TryGetValue(stat.PersonId, out Person? value) ? value : new Person(),
                         JobCount = stat.JobCount,
                         EarliestYear = stat.EarliestYear,
                         LatestYear = stat.LatestYear
                     })
-                    .ToList();
+;
             });
-
             var jobPersonJobCount = new JobCount
             {
                 Job = job,
@@ -226,14 +225,14 @@ namespace FilmDB.Controllers
                                       FilmId = fp2.FilmId,
                                       Year = f.Year
                                   })
-                                  .ToList() // Execute query here
+                                  .ToList() // Execute query here: Tolist to work in memory for grouping
                                   .GroupBy(x => x.CollaboratorId)
                                   .Select(group => new PersonJobCount
                                   {
                                       Person = group.First().Collaborator,
                                       Job = new Job
                                       {
-                                          Title = string.Join(", ", group.Select(x => x.JobTitle).Distinct().OrderBy(t => t))
+                                          Title = string.Join(", ", group.Select(x => x.JobTitle).Distinct().Order())
                                       },
                                       JobCount = group.Select(x => x.FilmId).Distinct().Count(),
                                       EarliestYear = (short)group.Min(x => x.Year),

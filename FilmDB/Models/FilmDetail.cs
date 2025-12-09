@@ -11,9 +11,9 @@ namespace FilmDB.Models
         public FilmDetail()
         {
             Film = new Film();
-            Genres = new List<Genre>();
-            Cast = new List<PersonJob>();
-            Crew = new List<PersonJob>();
+            Genres = [];
+            Cast = [];
+            Crew = [];
         }
     }
 }

@@ -9,7 +9,7 @@ namespace FilmDB.Models
         public JobCount()
         {
             Job = new Job();
-            PersonJobSummary = new List<PersonJobSummary>();
+            PersonJobSummary = [];
         }
     }
 }

@@ -12,8 +12,8 @@ namespace FilmDB.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
-        private static readonly int[] CuratedCharacterIds = new[]
-        {
+        private static readonly int[] CuratedCharacterIds =
+        [
             11981,  // Batman
             17190, // Superman
             102027,  // Spider man
@@ -55,7 +55,8 @@ namespace FilmDB.Controllers
             6038, //Fantine
             33791,  // James Bond
             79862, //Jack Ryan
-        };
+        ];
+        private readonly bool _curated = true;
         public CharacterController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
@@ -64,15 +65,21 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public IActionResult Character()
         {
-            var popularCharacters = CuratedCharacters();
-            //var popularCharacters = FrequentCharacters(40);
+            List<CharacterCount> popularCharacters;
+            if (_curated)
+            {
+                popularCharacters = CuratedCharacters();
+            }
+            else
+            {
+                popularCharacters = FrequentCharacters(40);
+            }
             return View(popularCharacters);
         }
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
-        public List<CharacterCount> CuratedCharacters()
+        private List<CharacterCount> CuratedCharacters()
         {
             // Curated list of iconic character IDs
-            // TODO: Add your actual character IDs here
             // Get iconic characters from cache (or DB if not cached)
             var popularCharacters = _cache.GetOrCreate("IconicCharacters", entry =>
             {
@@ -97,7 +104,7 @@ namespace FilmDB.Controllers
             }) ?? new List<CharacterCount>()!;
             return popularCharacters!;
         }
-        public List<CharacterCount>? FrequentCharacters(int quantity)
+        private List<CharacterCount> FrequentCharacters(int quantity)
         {
             var characters = _db.Character
                 .AsNoTracking()
@@ -115,6 +122,10 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
         public IActionResult CharacterSearch(string query)
         {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return PartialView("_CharacterTable", new List<CharacterCount>());
+            }
             var characters = _db.Character
                 .AsNoTracking()
                 .Where(c => c.Name.Contains(query))
@@ -135,6 +146,10 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult CharacterDetail(int characterId)
         {
+            if (!ModelState.IsValid || characterId <= 0)
+            {
+                return BadRequest();
+            }
             // Step 1: Get character name
             var characterName = _db.Character
                 .AsNoTracking()

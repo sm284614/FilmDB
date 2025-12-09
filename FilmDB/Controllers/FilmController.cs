@@ -11,6 +11,7 @@ namespace FilmDB.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
+        private const string _filmTablePartialViewName = "_FilmTable";
         public FilmController(ApplicationDbContext db, IMemoryCache cache)
         {
             _db = db;
@@ -19,6 +20,10 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult Film(string? genreIds = null, int? startYear = null, int? endYear = null)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
             List<Film> filmList;
             List<int>? preSelectedGenres = null;
             int[]? preSelectedYearRange = null;
@@ -31,7 +36,7 @@ namespace FilmDB.Controllers
                     .Where(id => id > 0)
                     .ToList();
 
-                if (genreIdList.Any())
+                if (genreIdList.Count != 0)
                 {
                     // Calculate combined bit value
                     int combinedBitValue = 0;
@@ -54,7 +59,7 @@ namespace FilmDB.Controllers
                         .ToList();
                     ViewBag.FilterDescription = $"{string.Join("/", genreNames)} films";
                     preSelectedGenres = genreIdList;
-                    preSelectedYearRange = new[] { startYear.Value, endYear.Value };
+                    preSelectedYearRange = [startYear.Value, endYear.Value];
                 }
                 else
                 {
@@ -97,6 +102,10 @@ namespace FilmDB.Controllers
         }
         public IActionResult FilterFilmsByGenreBitwise(List<int> genreIds)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
             if (genreIds.Count > 0)
             {
                 //film.genre_bit_field encodes genres by their id (1=adventure,2=drama,4=fantasy,8=biography etc.)
@@ -112,20 +121,24 @@ namespace FilmDB.Controllers
                     .OrderBy(g => g.Name)
                     .Select(g => g.Name) // Select only the names
                     .ToList();
-                ViewBag.FilterDescription = string.Join(@"/", genreNames) + " films";
+                ViewBag.FilterDescription = string.Join("/", genreNames) + " films";
                 ViewBag.FilmCount = films.Count;
-                return PartialView("_FilmTable", films);
+                return PartialView(_filmTablePartialViewName, films);
             }
             else
             {
                 ViewBag.FilterDescription = "No genres selected";
                 ViewBag.FilmCount = 0;
-                return PartialView("_FilmTable", new List<Film>());
+                return PartialView(_filmTablePartialViewName, new List<Film>());
             }
         }
         public IActionResult FilterFilmsByGenreBitwiseWithYearRange(List<int> genreIds, int startYear, int endYear)
         {
-            if (genreIds != null && genreIds.Count > 0)
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            if (genreIds?.Count > 0)
             {
                 // Calculate the bitmask for the selected genres
                 int bitField = 0;
@@ -145,9 +158,9 @@ namespace FilmDB.Controllers
                     .OrderBy(g => g.Name)
                     .Select(g => g.Name)
                     .ToList();
-                ViewBag.FilterDescription = string.Join(@"/", genreNames) + $" films";
+                ViewBag.FilterDescription = string.Join("/", genreNames) + " films";
                 ViewBag.FilmCount = films.Count;
-                return PartialView("_FilmTable", films);
+                return PartialView(_filmTablePartialViewName, films);
             }
             else
             {
@@ -159,7 +172,7 @@ namespace FilmDB.Controllers
                     .ToList();
                 ViewBag.FilterDescription = $"Films from {startYear} to {endYear}";
                 ViewBag.FilmCount = films.Count;
-                return PartialView("_FilmTable", films);
+                return PartialView(_filmTablePartialViewName, films);
             }
         }
         [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
@@ -173,7 +186,7 @@ namespace FilmDB.Controllers
                 .ToList();
             ViewBag.FilterDescription = $"Titles matching '{query}'";
             ViewBag.FilmCount = films.Count;
-            return PartialView("_FilmTable", films);
+            return PartialView(_filmTablePartialViewName, films);
         }
         [ResponseCache(Duration = 360, Location = ResponseCacheLocation.Client)]
         public IActionResult FilmDetail(string id)
@@ -251,14 +264,18 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public IActionResult FilmYear(int year)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
             // Fetch data for films from the specific year
             var films = _db.Film
                 .AsNoTracking()
                 .Where(f => f.Year == year)
-                .OrderBy(f => f.Title)  
+                .OrderBy(f => f.Title)
                 .ToList();
             ViewBag.FilterDescription = $"Films from {year}";
-            ViewBag.FilmCount = films.Count; 
+            ViewBag.FilmCount = films.Count;
             return View("FilmList", films);
         }
     }

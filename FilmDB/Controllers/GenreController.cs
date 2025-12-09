@@ -32,6 +32,10 @@ namespace FilmDB.Controllers
         [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Client)]
         public IActionResult GenreGraphData(int genre_id)
         {
+            if (!ModelState.IsValid || genre_id <= 0)
+            {
+                return BadRequest();
+            }
             var genreName = _db.Genre
                 .AsNoTracking()
                 .Where(g => g.GenreId == genre_id)
@@ -76,7 +80,7 @@ namespace FilmDB.Controllers
                 .Where(id => id > 0)
                 .ToList();
             // check parsed list
-            if (!genreIdList.Any())
+            if (genreIdList.Count == 0)
             {
                 return BadRequest(new { error = "Invalid genre IDs" });
             }
@@ -93,7 +97,7 @@ namespace FilmDB.Controllers
                 .Where(g => genreIdList.Contains(g.GenreId))
                 .ToList();
             // check found genres
-            if (!genres.Any())
+            if (genres.Count == 0)
             {
                 return NotFound(new { error = "Genres not found" });
             }
@@ -119,7 +123,7 @@ namespace FilmDB.Controllers
             var years = filmsByYear.Select(x => x.Year).ToArray();
             var counts = filmsByYear.Select(x => x.Count).ToArray();
             // Create a combined genre name for display
-            var genreNames = genres.Select(g => g.Name).OrderBy(n => n).ToList();
+            var genreNames = genres.Select(g => g.Name).Order().ToList();
             var combinedName = string.Join(" + ", genreNames);
             return Json(new
             {
@@ -130,6 +134,10 @@ namespace FilmDB.Controllers
         }
         public IActionResult GenreGraph(int genre_id)
         {
+            if (!ModelState.IsValid || genre_id <= 0)
+            {
+                return BadRequest();
+            }
             var genreData = GetCachedGenreData(genre_id);
             if (genreData == null)
             {
@@ -139,6 +147,10 @@ namespace FilmDB.Controllers
         }
         public IActionResult GenreInfo(int genre_id)
         {
+            if (!ModelState.IsValid || genre_id <= 0)
+            {
+                return BadRequest();
+            }
             var genreData = GetCachedGenreData(genre_id);
             if (genreData == null)
             {

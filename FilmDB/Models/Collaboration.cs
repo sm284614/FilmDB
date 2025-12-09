@@ -9,7 +9,7 @@ namespace FilmDB.Models
         public Collaboration()
         {
             Person = new Person();
-            CollaborationList = new List<PersonJobCount>();
+            CollaborationList = [];
         }
     }
 }
