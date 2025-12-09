@@ -25,16 +25,13 @@
 	{
 		button.addEventListener("click", function ()
 		{
-			var genreId = this.dataset.id;
-			var adding;
-
+			let genreId = this.dataset.id;
 			if (selectedGenres.includes(genreId))
 			{
 				// Remove genre from list and reset button class
 				selectedGenres = selectedGenres.filter(id => id !== genreId);
 				this.classList.remove("btn-primary");
 				this.classList.add("btn-secondary");
-				adding = false;
 			}
 			else
 			{
@@ -42,7 +39,6 @@
 				selectedGenres.push(genreId);
 				this.classList.remove("btn-secondary");
 				this.classList.add("btn-primary");
-				adding = true;
 			}
 
 			// Update the graph based on current mode
@@ -55,7 +51,7 @@
 	{
 		button.addEventListener("click", function ()
 		{
-			let selectedMode = parseInt(this.dataset.mode);
+			let selectedMode = Number.parseInt(this.dataset.mode);
 
 			if (graphMode !== selectedMode)
 			{
@@ -403,17 +399,17 @@
 		if (!chartElement) return;
 
 		const ctx = chartElement.getContext('2d');
-		const genre = chartElement.getAttribute("data-genre");
-		const genreId = chartElement.getAttribute("data-genre-id");
-		fullLabels = JSON.parse(chartElement.getAttribute("data-labels"));
-		fullData = JSON.parse(chartElement.getAttribute("data-data"));
+		const genre = chartElement.dataset.genre;
+		const genreId = chartElement.dataset.genreId;
+		fullLabels = JSON.parse(chartElement.dataset.labels);
+		fullData = JSON.parse(chartElement.dataset.data);
 
 		let filteredLabels = [];
 		let filteredData = [];
 
 		for (let i = 0; i < fullLabels.length; i++)
 		{
-			let year = parseInt(fullLabels[i]);
+			let year = Number.parseInt(fullLabels[i]);
 			if (year >= minimumYear && year <= maximumYear)
 			{
 				filteredLabels.push(fullLabels[i]);
@@ -518,7 +514,7 @@
 				let alignedData = filteredYears.map(year =>
 				{
 					let yearIndex = genreData.years.indexOf(year);
-					return yearIndex !== -1 ? genreData.counts[yearIndex] : 0;
+					return yearIndex === -1 ? 0 : genreData.counts[yearIndex];
 				});
 				dataset.data = alignedData;
 			});
@@ -531,7 +527,7 @@
 
 			for (let i = 0; i < fullLabels.length; i++)
 			{
-				let year = parseInt(fullLabels[i]);
+				let year = Number.parseInt(fullLabels[i]);
 				if (year >= minYear && year <= maxYear)
 				{
 					filteredLabels.push(fullLabels[i]);

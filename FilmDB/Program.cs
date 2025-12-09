@@ -21,7 +21,7 @@ namespace FilmDB
             builder.Services.AddControllersWithViews();
             builder.Services.AddMemoryCache();
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddRateLimiter(options => options.AddFixedWindowLimiter("default", opt => { opt.Window = TimeSpan.FromSeconds(10); opt.PermitLimit = 20; opt.QueueLimit = 0; }));
+            builder.Services.AddRateLimiter(options => { options.AddFixedWindowLimiter("default", opt => { opt.Window = TimeSpan.FromSeconds(10); opt.PermitLimit = 20; opt.QueueLimit = 0; }); });
             builder.Services.AddResponseCaching();
 
             WebApplication app = builder.Build();
@@ -48,7 +48,7 @@ namespace FilmDB
             app.Use(async (context, next) =>
             {
                 var ua = context.Request.Headers.UserAgent.ToString();
-                if (string.IsNullOrEmpty(ua) || ua.Contains("bot", StringComparison.OrdinalIgnoreCase) || ua.Contains("crawl", StringComparison.OrdinalIgnoreCase)        || ua.Contains("spider", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(ua) || ua.Contains("bot", StringComparison.OrdinalIgnoreCase) || ua.Contains("crawl", StringComparison.OrdinalIgnoreCase) || ua.Contains("spider", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.StatusCode = 403;
                     return;
@@ -70,13 +70,40 @@ namespace FilmDB
 
             app.Use(async (context, next) =>
             {
-                context.Response.Headers.Append("Content-Security-Policy",
-                    "default-src 'self'; script-src 'self' https://filmdb20250207212520.azurewebsites.net https://cdn.jsdelivr.net/npm/chart.js https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js https://code.jquery.com https://cdnjs.cloudflare.com http://localhost aspnetcore-browser-refresh 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
-
+                var csp = BuildContentSecurityPolicy(app.Environment.IsDevelopment());
+                context.Response.Headers.Append("Content-Security-Policy", csp);
                 await next();
             });
-
             app.Run();
+        }
+        static string BuildContentSecurityPolicy(bool isDevelopment)
+        {
+            var scriptSources = new List<string>
+            {
+                "'self'",
+                "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js",
+                "https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js",
+                "https://code.jquery.com/jquery-3.7.1.min.js"
+            };
+            var styleSources = new List<string>
+            {
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css"
+            };
+            if (isDevelopment)
+            {
+                scriptSources.Add("http://localhost:*");
+                scriptSources.Add("ws://localhost:*");
+            }
+            var csp = $"default-src 'self'; " +
+                      $"script-src {string.Join(" ", scriptSources)}; " +
+                      $"style-src {string.Join(" ", styleSources)}; " +
+                      $"font-src 'self'; " +
+                      $"img-src 'self' data:; " +
+                      $"connect-src 'self'" +
+                      (isDevelopment ? " ws://localhost:* http://localhost:*" : "");
+            return csp;
         }
     }
 }
