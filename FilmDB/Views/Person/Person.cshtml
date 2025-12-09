@@ -27,20 +27,23 @@
 			<tbody>
 				@foreach (var personFilm in Model)
 				{
-					<tr>
-						<td>
-							<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personFilm.Person.PersonId">
-								@personFilm.Person.Name
-							</a>
-						</td>
-						<td>
-							<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@personFilm.Film.FilmId">
-								@personFilm.Film.Title
-							</a>
-						</td>
-						<td>@personFilm.Count</td>
-						<td>@personFilm.Person.BirthYear - @personFilm.Person.DeathYear</td>
-					</tr>
+					@if (personFilm != null)
+					{
+						<tr>
+							<td>
+								<a asp-controller="Person" asp-action="PersonFilmography" asp-route-id="@personFilm.Person.PersonId">
+									@personFilm.Person.Name
+								</a>
+							</td>
+							<td>
+								<a asp-controller="Film" asp-action="FilmDetail" asp-route-id="@personFilm.Film.FilmId">
+									@personFilm.Film.Title
+								</a>
+							</td>
+							<td>@personFilm.Count</td>
+							<td>@personFilm.Person.BirthYear - @personFilm.Person.DeathYear</td>
+						</tr>
+					}
 				}
 			</tbody>
 		</table>
