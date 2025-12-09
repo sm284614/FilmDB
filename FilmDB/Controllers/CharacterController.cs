@@ -1,13 +1,13 @@
 ﻿using FilmDB.Data;
 using FilmDB.Models;
-using FilmDB.Models.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using System.Drawing;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FilmDB.Controllers
 {
+    [EnableRateLimiting("default")]
     public class CharacterController : Controller
     {
         private readonly ApplicationDbContext _db;
