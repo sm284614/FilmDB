@@ -20,7 +20,24 @@ namespace FilmDB
             builder.Services.AddSwaggerGen();
             builder.Services.AddControllersWithViews();
             builder.Services.AddMemoryCache();
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Configure DbContext with SQL query logging
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+                // Enable detailed query logging in Development
+                if (builder.Environment.IsDevelopment())
+                {
+                    options.EnableSensitiveDataLogging(); // Shows parameter values
+                    options.EnableDetailedErrors();
+                    options.LogTo(Console.WriteLine, new[] {
+                        Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandExecuting,
+                        Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandExecuted
+                    }, Microsoft.Extensions.Logging.LogLevel.Information);
+                }
+            });
+
             builder.Services.AddRateLimiter(options => options.AddFixedWindowLimiter("default", opt => { opt.Window = TimeSpan.FromSeconds(10); opt.PermitLimit = 10; opt.QueueLimit = 0; }));
             builder.Services.AddResponseCaching();
 
@@ -52,6 +69,24 @@ namespace FilmDB
                 }
 
                 await next();
+            });
+
+            // Performance monitoring middleware
+            app.Use(async (context, next) =>
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                await next();
+                sw.Stop();
+
+                // Log slow requests (> 500ms)
+                if (sw.ElapsedMilliseconds > 500)
+                {
+                    Console.WriteLine($"[SLOW REQUEST] {context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds}ms");
+                }
+                else if (app.Environment.IsDevelopment())
+                {
+                    Console.WriteLine($"[REQUEST] {context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds}ms");
+                }
             });
 
             app.UseHttpsRedirection();
